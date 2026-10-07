@@ -1,18 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* PITCH base styles */
+/* ============================================
+   PITCH — Base Styles
+   Design tokens from PITCH_UI_SPEC_FINAL.md
+   ============================================ */
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Typography */
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #213547;
-  background-color: #ffffff;
+
+  /* PITCH palette */
+  --pitch-canvas: #F8F9FF;
+  --pitch-surface: #FFFFFF;
+  --pitch-text: #0B1C30;
+  --pitch-muted: #45464D;
+  --pitch-outline: #76777D;
+  --pitch-outline-variant: #C6C6CD;
+  --pitch-navy: #0F172A;
+  --pitch-blue: #2563EB;
+  --pitch-blue-hover: #3B82F6;
+  --pitch-error: #BA1A1A;
+
+  color: var(--pitch-text);
+  background-color: var(--pitch-canvas);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus outline for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--pitch-blue);
+  outline-offset: 2px;
 }

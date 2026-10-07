@@ -1,3 +1,66 @@
-// constants — placeholder
-// TODO: Implement in subsequent build phases
+ï»¿/**
+ * PITCH constants shared across the frontend.
+ */
 
+// Application roles
+export const ROLES = {
+  COMPANY: 'COMPANY',
+  COMMITTEE: 'COMMITTEE',
+  ADMIN: 'ADMIN',
+};
+
+// Event statuses
+export const EVENT_STATUS = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  ARCHIVED: 'ARCHIVED',
+};
+
+// Deal statuses
+export const DEAL_STATUS = {
+  INTERESTED: 'INTERESTED',
+  DISCUSSION: 'DISCUSSION',
+  NEGOTIATING: 'NEGOTIATING',
+  PROPOSAL: 'PROPOSAL',
+  COUNTER_PROPOSAL: 'COUNTER_PROPOSAL',
+  AGREED: 'AGREED',
+  MOU_DRAFT: 'MOU_DRAFT',
+  AWAITING_SIGNATURES: 'AWAITING_SIGNATURES',
+  PARTIALLY_SIGNED: 'PARTIALLY_SIGNED',
+  EXECUTED: 'EXECUTED',
+  FULFILLMENT: 'FULFILLMENT',
+  COMPLETED: 'COMPLETED',
+  DECLINED: 'DECLINED',
+  CANCELLED: 'CANCELLED',
+  DISPUTED: 'DISPUTED',
+  EXPIRED: 'EXPIRED',
+};
+
+// Application statuses
+export const APPLICATION_STATUS = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
+};
+
+// Contribution types
+export const CONTRIBUTION_TYPES = [
+  'CASH',
+  'PRODUCT',
+  'FOOD',
+  'BEVERAGE',
+  'MERCHANDISE',
+  'EQUIPMENT',
+  'SERVICE',
+  'VENUE',
+  'TRANSPORTATION',
+  'GIFT_HAMPER',
+  'OTHER',
+];
+
+// App info
+export const APP_NAME = 'PITCH';
+export const APP_TAGLINE = 'Where Brands Meet Campus Communities';
