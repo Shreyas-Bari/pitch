@@ -20,11 +20,24 @@ app.use(express.urlencoded({ extended: true }));
 
 // --------------- Routes ---------------
 
+const connectDB = require('./src/config/db');
+
+// Connect to MongoDB Atlas
+connectDB();
+
 // Health check
 app.get('/api/health', (_req, res) => {
+  const mongoose = require('mongoose');
+  const dbStatusMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
   res.status(200).json({
     status: 'ok',
     message: 'PITCH API is running',
+    database: dbStatusMap[mongoose.connection.readyState] || 'unknown',
     timestamp: new Date().toISOString(),
   });
 });
