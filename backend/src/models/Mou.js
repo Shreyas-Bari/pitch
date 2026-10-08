@@ -1,37 +1,27 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const { MOU_STATUS } = require('../utils/constants');
 
-const MouSchema = new mongoose.Schema(
+/**
+ * MoU Model (Container)
+ * Collection: mous
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 19
+ */
+const mouSchema = new mongoose.Schema(
   {
     dealId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Deal',
-      required: [true, 'Deal ID is required'],
-      unique: true,
-      index: true,
+      required: [true, 'Deal ID is required for MoU'],
     },
     currentVersionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'MouVersion',
       default: null,
     },
-    templateIdentifier: {
-      type: String,
-      default: 'PITCH_MOU_V1',
-    },
     status: {
       type: String,
-      enum: [
-        'DRAFT',
-        'UNDER_REVIEW',
-        'PENDING_SIGNATURE',
-        'AWAITING_SIGNATURES',
-        'PARTIALLY_SIGNED',
-        'EXECUTED',
-        'SUPERSEDED',
-        'VOID',
-      ],
-      default: 'DRAFT',
-      index: true,
+      enum: Object.values(MOU_STATUS),
+      default: MOU_STATUS.DRAFT,
     },
   },
   {
@@ -39,4 +29,9 @@ const MouSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.models.Mou || mongoose.model('Mou', MouSchema);
+// Indexes per PITCH_DATABASE_FINAL.md Section 19 & Section 33
+mouSchema.index({ dealId: 1 }, { unique: true });
+
+const Mou = mongoose.model('Mou', mouSchema);
+
+module.exports = Mou;

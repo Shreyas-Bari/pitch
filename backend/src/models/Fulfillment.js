@@ -1,108 +1,56 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const {
+  FULFILLMENT_RESPONSIBLE_PARTY,
+  FULFILLMENT_TYPE,
+  FULFILLMENT_STATUS,
+} = require('../utils/constants');
 
-const FulfillmentSchema = new mongoose.Schema(
+/**
+ * Fulfillment Model
+ * Collection: fulfillments
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 22
+ */
+const fulfillmentSchema = new mongoose.Schema(
   {
     dealId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Deal',
-      required: [true, 'Deal ID is required'],
-      index: true,
+      required: [true, 'Deal ID is required for fulfillment'],
     },
     responsibleParty: {
       type: String,
-      enum: ['COMPANY', 'COMMITTEE'],
+      enum: Object.values(FULFILLMENT_RESPONSIBLE_PARTY),
       required: [true, 'Responsible party is required'],
-      index: true,
-    },
-    contributionIndex: {
-      type: Number,
-      default: 0,
-    },
-    contributionName: {
-      type: String,
-      default: '',
     },
     type: {
       type: String,
-      enum: [
-        'CASH',
-        'PRODUCT',
-        'SERVICE',
-        'PROMOTION',
-        'BOOTH',
-        'MERCHANDISE',
-        'FOOD',
-        'BEVERAGE',
-        'EQUIPMENT',
-        'VENUE',
-        'TRANSPORTATION',
-        'GIFT_HAMPER',
-        'OTHER',
-      ],
-      default: 'OTHER',
+      enum: Object.values(FULFILLMENT_TYPE),
+      required: [true, 'Fulfillment obligation type is required'],
     },
     description: {
       type: String,
       required: [true, 'Fulfillment description is required'],
-      trim: true,
-    },
-    expectedAmount: {
-      type: Number,
-      default: 0,
-    },
-    expectedQuantity: {
-      type: Number,
-      default: 0,
-    },
-    receivedAmount: {
-      type: Number,
-      default: 0,
-    },
-    receivedQuantity: {
-      type: Number,
-      default: 0,
     },
     quantity: {
       type: Number,
+      min: 0,
+      default: 1,
     },
     unit: {
       type: String,
-      default: '',
+      default: 'units',
     },
     dueDate: {
       type: Date,
       default: null,
-      index: true,
     },
     status: {
       type: String,
-      enum: [
-        'PENDING',
-        'IN_PROGRESS',
-        'SUBMITTED',
-        'PARTIALLY_FULFILLED',
-        'FULFILLED',
-        'COMPLETED',
-        'DISPUTED',
-        'CANCELLED',
-      ],
-      default: 'PENDING',
-      index: true,
+      enum: Object.values(FULFILLMENT_STATUS),
+      default: FULFILLMENT_STATUS.PENDING,
     },
     completedAt: {
       type: Date,
-      default: null,
-    },
-    evidenceFiles: [{
-      type: mongoose.Schema.Types.Mixed,
-    }],
-    notes: {
-      type: String,
-      default: '',
-    },
-    updatedByUserId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
       default: null,
     },
   },
@@ -111,6 +59,12 @@ const FulfillmentSchema = new mongoose.Schema(
   }
 );
 
-FulfillmentSchema.index({ dealId: 1, responsibleParty: 1, status: 1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 22 & Section 33
+fulfillmentSchema.index({ dealId: 1 });
+fulfillmentSchema.index({ responsibleParty: 1 });
+fulfillmentSchema.index({ status: 1 });
+fulfillmentSchema.index({ dueDate: 1 });
 
-module.exports = mongoose.models.Fulfillment || mongoose.model('Fulfillment', FulfillmentSchema);
+const Fulfillment = mongoose.model('Fulfillment', fulfillmentSchema);
+
+module.exports = Fulfillment;

@@ -1,49 +1,51 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const { SELF_REPORTED_OWNER_TYPE } = require('../utils/constants');
 
-const SelfReportedHistorySchema = new mongoose.Schema(
+/**
+ * SelfReportedHistory Model
+ * Collection: selfReportedHistory
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 25
+ */
+const selfReportedHistorySchema = new mongoose.Schema(
   {
     ownerType: {
       type: String,
-      enum: ['COMPANY', 'COMMITTEE'],
-      required: [true, 'Owner type is required'],
-      index: true,
+      enum: Object.values(SELF_REPORTED_OWNER_TYPE),
+      required: [true, 'Owner type is required (COMPANY or COMMITTEE)'],
     },
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, 'Owner ID is required'],
-      index: true,
     },
     title: {
       type: String,
-      required: [true, 'Title is required'],
+      required: [true, 'History title is required'],
       trim: true,
     },
     description: {
       type: String,
-      trim: true,
       default: '',
     },
     eventName: {
       type: String,
+      required: [true, 'Event name is required'],
       trim: true,
-      default: '',
     },
     partnerName: {
       type: String,
+      required: [true, 'Partner organization name is required'],
       trim: true,
-      default: '',
     },
     date: {
       type: Date,
-      default: null,
+      required: [true, 'Event date is required'],
     },
-    mediaFileIds: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'File',
-    }],
-    mediaUrls: [{
-      type: String,
-    }],
+    mediaFileIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'File',
+      },
+    ],
     verificationStatus: {
       type: String,
       enum: ['SELF_REPORTED'],
@@ -55,6 +57,12 @@ const SelfReportedHistorySchema = new mongoose.Schema(
   }
 );
 
-SelfReportedHistorySchema.index({ ownerType: 1, ownerId: 1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 25
+selfReportedHistorySchema.index({ ownerType: 1, ownerId: 1 });
 
-module.exports = mongoose.models.SelfReportedHistory || mongoose.model('SelfReportedHistory', SelfReportedHistorySchema);
+const SelfReportedHistory = mongoose.model(
+  'SelfReportedHistory',
+  selfReportedHistorySchema
+);
+
+module.exports = SelfReportedHistory;

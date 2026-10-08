@@ -1,44 +1,21 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const { NOTIFICATION_TYPE } = require('../utils/constants');
 
-const NotificationSchema = new mongoose.Schema(
+/**
+ * Notification Model
+ * Collection: notifications
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 27
+ */
+const notificationSchema = new mongoose.Schema(
   {
     recipientUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Recipient User ID is required'],
-      index: true,
+      required: [true, 'Recipient user ID is required'],
     },
     type: {
       type: String,
-      enum: [
-        'APPLICATION_RECEIVED',
-        'APPLICATION_ACCEPTED',
-        'APPLICATION_REJECTED',
-        'INVITATION_RECEIVED',
-        'INVITATION_ACCEPTED',
-        'INVITATION_DECLINED',
-        'NEW_APPLICATION',
-        'NEW_INVITATION',
-        'NEW_MESSAGE',
-        'NEW_PROPOSAL',
-        'COUNTER_PROPOSAL',
-        'PROPOSAL_ACCEPTED',
-        'PROPOSAL_DECLINED',
-        'MOU_CREATED',
-        'MOU_UPDATED',
-        'MOU_GENERATED',
-        'SIGNATURE_REQUESTED',
-        'MOU_SIGNED',
-        'DEAL_EXECUTED',
-        'CONTRIBUTION_DUE',
-        'CONTRIBUTION_RECEIVED',
-        'FULFILLMENT_UPDATE',
-        'DEAL_COMPLETED',
-        'REVIEW_AVAILABLE',
-        'NEW_REVIEW',
-        'DISPUTE_CREATED',
-        'SYSTEM',
-      ],
+      enum: Object.values(NOTIFICATION_TYPE),
       required: [true, 'Notification type is required'],
     },
     title: {
@@ -48,42 +25,19 @@ const NotificationSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      trim: true,
-      default: '',
-    },
-    body: {
-      type: String,
-      trim: true,
+      required: [true, 'Notification message is required'],
     },
     entityType: {
       type: String,
-      trim: true,
-      default: '',
+      default: null,
     },
     entityId: {
       type: mongoose.Schema.Types.ObjectId,
       default: null,
     },
-    relatedEntityType: {
-      type: String,
-      trim: true,
-    },
-    relatedEntityId: {
-      type: mongoose.Schema.Types.ObjectId,
-    },
-    actionUrl: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    read: {
-      type: Boolean,
-      default: false,
-    },
     readAt: {
       type: Date,
       default: null,
-      index: true,
     },
   },
   {
@@ -91,7 +45,10 @@ const NotificationSchema = new mongoose.Schema(
   }
 );
 
-NotificationSchema.index({ recipientUserId: 1, createdAt: -1 });
-NotificationSchema.index({ recipientUserId: 1, readAt: 1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 27 & Section 33
+notificationSchema.index({ recipientUserId: 1, createdAt: -1 });
+notificationSchema.index({ recipientUserId: 1, readAt: 1 });
 
-module.exports = mongoose.models.Notification || mongoose.model('Notification', NotificationSchema);
+const Notification = mongoose.model('Notification', notificationSchema);
+
+module.exports = Notification;

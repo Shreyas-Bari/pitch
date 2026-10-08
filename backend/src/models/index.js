@@ -1,8 +1,19 @@
+/**
+ * PITCH — Model Registry
+ * Central export for all 27 authoritative Mongoose models defined across:
+ * - docs/PITCH_DATABASE_FINAL.md (25 models: 24 core collections + dealAgreements)
+ * - docs/PITCH_FINAL_BUILD_SPEC.md (2 additional models: Dispute & Document)
+ *
+ * Exact counts:
+ * - Authoritative Models: 27
+ * - Authoritative Collections: 27
+ * - Model Directory Files: 28 (27 model files + 1 index.js registry)
+ */
+
 const User = require('./User');
 const Company = require('./Company');
 const Committee = require('./Committee');
 const File = require('./File');
-const Document = require('./Document');
 const Event = require('./Event');
 const SponsorshipPackage = require('./SponsorshipPackage');
 const Application = require('./Application');
@@ -23,15 +34,15 @@ const Review = require('./Review');
 const SelfReportedHistory = require('./SelfReportedHistory');
 const Notification = require('./Notification');
 const Report = require('./Report');
-const Dispute = require('./Dispute');
 const AuditLog = require('./AuditLog');
+const Dispute = require('./Dispute');
+const Document = require('./Document');
 
 module.exports = {
   User,
   Company,
   Committee,
   File,
-  Document,
   Event,
   SponsorshipPackage,
   Application,
@@ -52,6 +63,7 @@ module.exports = {
   SelfReportedHistory,
   Notification,
   Report,
-  Dispute,
   AuditLog,
+  Dispute,
+  Document,
 };

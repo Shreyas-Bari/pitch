@@ -1,12 +1,21 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const {
+  EVENT_LOCATION_MODE,
+  EVENT_STATUS,
+  CONTRIBUTION_TYPES,
+} = require('../utils/constants');
 
-const EventSchema = new mongoose.Schema(
+/**
+ * Event Model
+ * Collection: events
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 8
+ */
+const eventSchema = new mongoose.Schema(
   {
     committeeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Committee',
       required: [true, 'Owning committee ID is required'],
-      index: true,
     },
     title: {
       type: String,
@@ -16,129 +25,91 @@ const EventSchema = new mongoose.Schema(
     slug: {
       type: String,
       required: [true, 'Event slug is required'],
-      unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     description: {
       type: String,
-      trim: true,
-      default: '',
+      required: [true, 'Event description is required'],
     },
     category: {
       type: String,
       required: [true, 'Event category is required'],
       trim: true,
-      index: true,
     },
     eventType: {
       type: String,
       trim: true,
-      default: 'Event',
+      default: '',
     },
     eventDate: {
       type: Date,
       required: [true, 'Event start date is required'],
-      index: true,
-    },
-    startDate: {
-      type: Date,
     },
     endDate: {
       type: Date,
       default: null,
     },
-    college: {
-      type: String,
-      trim: true,
-      default: '',
-    },
     location: {
       mode: {
         type: String,
-        enum: ['PHYSICAL', 'ONLINE', 'HYBRID'],
-        default: 'PHYSICAL',
+        enum: Object.values(EVENT_LOCATION_MODE),
+        default: EVENT_LOCATION_MODE.PHYSICAL,
       },
       venue: { type: String, trim: true, default: '' },
-      city: { type: String, trim: true, default: '', index: true },
-      state: { type: String, trim: true, default: '', index: true },
+      city: { type: String, trim: true, default: '' },
+      state: { type: String, trim: true, default: '' },
       country: { type: String, trim: true, default: 'India' },
     },
     expectedAudience: {
-      min: { type: Number, default: 0 },
-      max: { type: Number, default: 0 },
+      min: { type: Number, min: 0, default: 0 },
+      max: { type: Number, min: 0, default: 0 },
     },
     audienceDescription: {
       type: String,
-      trim: true,
       default: '',
     },
     estimatedReach: {
       type: Number,
+      min: 0,
       default: 0,
     },
     socialReach: {
-      instagram: { type: Number, default: 0 },
-      linkedin: { type: Number, default: 0 },
-      other: { type: Number, default: 0 },
-    },
-    sponsorshipTarget: {
-      type: Number,
-      default: 0,
-    },
-    banner: {
-      type: String,
-      default: '',
+      instagram: { type: Number, min: 0, default: 0 },
+      linkedin: { type: Number, min: 0, default: 0 },
+      other: { type: Number, min: 0, default: 0 },
     },
     bannerFileId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'File',
       default: null,
     },
-    mediaFileIds: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'File',
-    }],
-    gallery: [{
-      type: String,
-    }],
+    mediaFileIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'File',
+      },
+    ],
     sponsorshipRequirements: {
-      contributionTypes: [{
-        type: String,
-        enum: [
-          'CASH',
-          'PRODUCT',
-          'SERVICE',
-          'MIXED',
-          'FOOD',
-          'BEVERAGE',
-          'MERCHANDISE',
-          'EQUIPMENT',
-          'VENUE',
-          'TRANSPORTATION',
-          'GIFT_HAMPER',
-          'OTHER',
-        ],
-      }],
-      budgetMin: { type: Number, default: 0 },
-      budgetMax: { type: Number, default: 0 },
+      contributionTypes: [
+        {
+          type: String,
+          enum: CONTRIBUTION_TYPES,
+        },
+      ],
+      budgetMin: { type: Number, min: 0, default: 0 },
+      budgetMax: { type: Number, min: 0, default: 0 },
     },
-    tags: [{
-      type: String,
-      trim: true,
-      lowercase: true,
-    }],
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     status: {
       type: String,
-      enum: ['DRAFT', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'ARCHIVED'],
-      default: 'DRAFT',
-      index: true,
-    },
-    visibility: {
-      type: String,
-      enum: ['PUBLIC', 'PRIVATE'],
-      default: 'PUBLIC',
+      enum: Object.values(EVENT_STATUS),
+      default: EVENT_STATUS.DRAFT,
     },
     publishedAt: {
       type: Date,
@@ -150,9 +121,16 @@ const EventSchema = new mongoose.Schema(
   }
 );
 
-EventSchema.index({ tags: 1 });
-EventSchema.index({ 'location.city': 1, status: 1 });
-EventSchema.index({ category: 1, status: 1 });
-EventSchema.index({ title: 'text', description: 'text', tags: 'text' });
+// Explicit indexes per PITCH_DATABASE_FINAL.md Section 8 & Section 33
+eventSchema.index({ slug: 1 }, { unique: true });
+eventSchema.index({ committeeId: 1 });
+eventSchema.index({ status: 1 });
+eventSchema.index({ eventDate: 1 });
+eventSchema.index({ category: 1 });
+eventSchema.index({ 'location.city': 1 });
+eventSchema.index({ 'location.state': 1 });
+eventSchema.index({ tags: 1 });
 
-module.exports = mongoose.models.Event || mongoose.model('Event', EventSchema);
+const Event = mongoose.model('Event', eventSchema);
+
+module.exports = Event;

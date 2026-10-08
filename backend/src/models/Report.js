@@ -1,44 +1,43 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const { REPORT_TARGET_TYPE, REPORT_STATUS } = require('../utils/constants');
 
-const ReportSchema = new mongoose.Schema(
+/**
+ * Report Model
+ * Collection: reports
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 28
+ */
+const reportSchema = new mongoose.Schema(
   {
     reporterUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Reporter User ID is required'],
-      index: true,
+      required: [true, 'Reporter user ID is required'],
     },
     targetType: {
       type: String,
-      enum: ['USER', 'EVENT', 'MESSAGE', 'DEAL', 'COMPANY', 'COMMITTEE'],
-      required: [true, 'Target type is required'],
-      index: true,
+      enum: Object.values(REPORT_TARGET_TYPE),
+      required: [true, 'Report target type is required'],
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, 'Target ID is required'],
-      index: true,
     },
     reason: {
       type: String,
-      required: [true, 'Reason is required'],
-      trim: true,
+      required: [true, 'Report reason is required'],
     },
     description: {
       type: String,
-      trim: true,
       default: '',
     },
     status: {
       type: String,
-      enum: ['OPEN', 'UNDER_REVIEW', 'RESOLVED', 'DISMISSED'],
-      default: 'OPEN',
-      index: true,
+      enum: Object.values(REPORT_STATUS),
+      default: REPORT_STATUS.OPEN,
     },
     resolution: {
       type: String,
-      trim: true,
-      default: '',
+      default: null,
     },
     resolvedByUserId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -55,6 +54,11 @@ const ReportSchema = new mongoose.Schema(
   }
 );
 
-ReportSchema.index({ targetType: 1, targetId: 1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 28
+reportSchema.index({ reporterUserId: 1 });
+reportSchema.index({ targetType: 1, targetId: 1 });
+reportSchema.index({ status: 1 });
 
-module.exports = mongoose.models.Report || mongoose.model('Report', ReportSchema);
+const Report = mongoose.model('Report', reportSchema);
+
+module.exports = Report;

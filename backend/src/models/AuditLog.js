@@ -1,36 +1,27 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
-const AuditLogSchema = new mongoose.Schema(
+/**
+ * AuditLog Model
+ * Collection: auditLogs
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 29
+ */
+const auditLogSchema = new mongoose.Schema(
   {
     actorUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      index: true,
       default: null,
     },
     action: {
       type: String,
       required: [true, 'Audit action is required'],
-      index: true,
-      trim: true,
     },
     entityType: {
       type: String,
-      required: [true, 'Entity type is required'],
-      index: true,
-      trim: true,
+      default: null,
     },
     entityId: {
       type: mongoose.Schema.Types.ObjectId,
-      index: true,
-      default: null,
-    },
-    oldValue: {
-      type: mongoose.Schema.Types.Mixed,
-      default: null,
-    },
-    newValue: {
-      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
     metadata: {
@@ -39,24 +30,24 @@ const AuditLogSchema = new mongoose.Schema(
     },
     ipAddress: {
       type: String,
-      default: '',
+      default: null,
     },
     userAgent: {
       type: String,
-      default: '',
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-      index: true,
+      default: null,
     },
   },
   {
-    timestamps: false,
+    timestamps: { createdAt: true, updatedAt: false }, // Append-only
   }
 );
 
-AuditLogSchema.index({ entityType: 1, entityId: 1 });
-AuditLogSchema.index({ createdAt: -1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 29
+auditLogSchema.index({ actorUserId: 1 });
+auditLogSchema.index({ action: 1 });
+auditLogSchema.index({ entityType: 1, entityId: 1 });
+auditLogSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.models.AuditLog || mongoose.model('AuditLog', AuditLogSchema);
+const AuditLog = mongoose.model('AuditLog', auditLogSchema);
+
+module.exports = AuditLog;

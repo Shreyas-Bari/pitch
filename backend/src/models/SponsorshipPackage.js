@@ -1,93 +1,74 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const {
+  SPONSORSHIP_PACKAGE_STATUS,
+  CONTRIBUTION_TYPES,
+} = require('../utils/constants');
 
-const SponsorshipPackageSchema = new mongoose.Schema(
+/**
+ * SponsorshipPackage Model
+ * Collection: sponsorshipPackages
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 9
+ */
+const sponsorshipPackageSchema = new mongoose.Schema(
   {
     eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
       required: [true, 'Event ID is required'],
-      index: true,
     },
     title: {
       type: String,
       required: [true, 'Package title is required'],
       trim: true,
     },
-    name: {
-      type: String,
-      trim: true,
-    },
     description: {
       type: String,
-      trim: true,
       default: '',
     },
-    contributionTypes: [{
-      type: String,
-      enum: [
-        'CASH',
-        'PRODUCT',
-        'SERVICE',
-        'MIXED',
-        'FOOD',
-        'BEVERAGE',
-        'MERCHANDISE',
-        'EQUIPMENT',
-        'VENUE',
-        'TRANSPORTATION',
-        'GIFT_HAMPER',
-        'OTHER',
-      ],
-    }],
-    cashPrice: {
-      type: Number,
-      default: 0,
-    },
-    cashRequirement: {
-      amount: { type: Number, default: 0 },
-      currency: { type: String, default: 'INR' },
-    },
-    nonCashRequirements: [{
-      type: {
+    contributionTypes: [
+      {
         type: String,
-        enum: [
-          'PRODUCT',
-          'SERVICE',
-          'FOOD',
-          'BEVERAGE',
-          'MERCHANDISE',
-          'EQUIPMENT',
-          'VENUE',
-          'TRANSPORTATION',
-          'GIFT_HAMPER',
-          'OTHER',
-        ],
+        enum: CONTRIBUTION_TYPES,
       },
-      description: { type: String, trim: true },
-      quantity: { type: Number, default: 1 },
-      unit: { type: String, trim: true, default: '' },
-    }],
-    benefits: [{
-      title: { type: String, trim: true },
-      description: { type: String, trim: true },
-    }],
+    ],
+    cashRequirement: {
+      amount: {
+        type: Number,
+        min: 0,
+        default: 0,
+      },
+      currency: {
+        type: String,
+        default: 'INR',
+      },
+    },
+    nonCashRequirements: [
+      {
+        type: {
+          type: String,
+          enum: CONTRIBUTION_TYPES,
+          default: 'PRODUCT',
+        },
+        description: { type: String, default: '' },
+        quantity: { type: Number, min: 0, default: 1 },
+        unit: { type: String, default: 'units' },
+      },
+    ],
+    benefits: [
+      {
+        title: { type: String, required: true },
+        description: { type: String, default: '' },
+      },
+    ],
     availability: {
       type: Number,
+      min: 0,
       default: 1,
-    },
-    maxSponsors: {
-      type: Number,
-      default: 1,
-    },
-    currentSponsors: {
-      type: Number,
-      default: 0,
     },
     status: {
       type: String,
-      enum: ['AVAILABLE', 'FULL', 'LIMITED', 'SOLD_OUT', 'INACTIVE'],
-      default: 'AVAILABLE',
-      index: true,
+      enum: Object.values(SPONSORSHIP_PACKAGE_STATUS),
+      default: SPONSORSHIP_PACKAGE_STATUS.AVAILABLE,
     },
   },
   {
@@ -95,6 +76,13 @@ const SponsorshipPackageSchema = new mongoose.Schema(
   }
 );
 
-SponsorshipPackageSchema.index({ eventId: 1, status: 1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 9 & Section 33
+sponsorshipPackageSchema.index({ eventId: 1 });
+sponsorshipPackageSchema.index({ status: 1 });
 
-module.exports = mongoose.models.SponsorshipPackage || mongoose.model('SponsorshipPackage', SponsorshipPackageSchema);
+const SponsorshipPackage = mongoose.model(
+  'SponsorshipPackage',
+  sponsorshipPackageSchema
+);
+
+module.exports = SponsorshipPackage;

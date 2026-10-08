@@ -1,40 +1,47 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const {
+  FILE_PROVIDER,
+  FILE_RESOURCE_TYPE,
+  FILE_PURPOSE,
+} = require('../utils/constants');
 
-const FileSchema = new mongoose.Schema(
+/**
+ * File Model
+ * Collection: files
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 7
+ */
+const fileSchema = new mongoose.Schema(
   {
     ownerUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Owner User ID is required'],
-      index: true,
+      required: [true, 'File owner user ID is required'],
     },
     provider: {
       type: String,
-      enum: ['CLOUDINARY', 'LOCAL', 'S3'],
-      default: 'CLOUDINARY',
+      enum: Object.values(FILE_PROVIDER),
+      default: FILE_PROVIDER.CLOUDINARY,
     },
     publicId: {
       type: String,
       required: [true, 'File public ID is required'],
-      trim: true,
     },
     url: {
       type: String,
       required: [true, 'File URL is required'],
-      trim: true,
     },
     resourceType: {
       type: String,
-      enum: ['IMAGE', 'RAW', 'DOCUMENT', 'VIDEO'],
-      default: 'IMAGE',
+      enum: Object.values(FILE_RESOURCE_TYPE),
+      default: FILE_RESOURCE_TYPE.IMAGE,
     },
     mimeType: {
       type: String,
-      default: '',
+      default: null,
     },
     originalName: {
       type: String,
-      default: '',
+      default: null,
     },
     sizeBytes: {
       type: Number,
@@ -42,15 +49,8 @@ const FileSchema = new mongoose.Schema(
     },
     purpose: {
       type: String,
-      enum: [
-        'PROFILE_IMAGE',
-        'EVENT_IMAGE',
-        'CHAT_ATTACHMENT',
-        'FULFILLMENT_EVIDENCE',
-        'MOU_DOCUMENT',
-        'OTHER',
-      ],
-      default: 'OTHER',
+      enum: Object.values(FILE_PURPOSE),
+      default: FILE_PURPOSE.OTHER,
     },
   },
   {
@@ -58,6 +58,10 @@ const FileSchema = new mongoose.Schema(
   }
 );
 
-FileSchema.index({ provider: 1, publicId: 1 }, { unique: true });
+// Indexes per PITCH_DATABASE_FINAL.md Section 7 & Section 33
+fileSchema.index({ provider: 1, publicId: 1 }, { unique: true });
+fileSchema.index({ ownerUserId: 1 });
 
-module.exports = mongoose.models.File || mongoose.model('File', FileSchema);
+const File = mongoose.model('File', fileSchema);
+
+module.exports = File;

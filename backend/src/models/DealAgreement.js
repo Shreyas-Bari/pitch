@@ -1,32 +1,43 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const { DEAL_AGREEMENT_STATUS, SIGNER_ROLE } = require('../utils/constants');
 
-const DealAgreementSchema = new mongoose.Schema(
+/**
+ * DealAgreement Model
+ * Collection: dealAgreements
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 18, docs/PITCH_MOU_FINAL.md & docs/PITCH_FINAL_BUILD_SPEC.md
+ * Stores the comprehensive, immutable commercial snapshot agreed upon by both parties.
+ */
+const dealAgreementSchema = new mongoose.Schema(
   {
     dealId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Deal',
-      required: [true, 'Deal ID is required'],
-      index: true,
+      required: [true, 'Deal ID is required for agreement'],
     },
     acceptedProposalId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Proposal',
-      required: [true, 'Accepted Proposal ID is required'],
-      index: true,
+      required: [true, 'Accepted proposal ID is required'],
     },
     snapshot: {
-      contribution: {
+      contributions: {
         type: mongoose.Schema.Types.Mixed,
-        default: {},
+        required: [true, 'Agreed contributions snapshot is required'],
       },
-      benefits: [{
+      benefits: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: [],
+      },
+      deliverables: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: [],
+      },
+      deliveryRequirements: {
         type: mongoose.Schema.Types.Mixed,
-      }],
-      deliverables: [{
-        type: mongoose.Schema.Types.Mixed,
-      }],
+        default: null,
+      },
       terms: {
-        type: mongoose.Schema.Types.Mixed,
+        type: String,
         default: '',
       },
       paymentDetails: {
@@ -34,33 +45,45 @@ const DealAgreementSchema = new mongoose.Schema(
         accountNumber: { type: String, default: '' },
         bankName: { type: String, default: '' },
         branch: { type: String, default: '' },
-        ifsc: { type: String, default: '' },
-        gstin: { type: String, default: '' },
+        ifscCode: { type: String, default: '' },
         pan: { type: String, default: '' },
+        gstin: { type: String, default: '' },
         accountsEmail: { type: String, default: '' },
-        paymentSchedule: { type: String, default: '' },
-        gstRate: { type: Number, default: 18 },
+        paymentSchedule: { type: [mongoose.Schema.Types.Mixed], default: [] },
+        gstRate: { type: Number, default: 0 },
+        currency: { type: String, default: 'INR' },
       },
     },
-    agreedBy: [{
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+    agreedBy: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        role: {
+          type: String,
+          enum: Object.values(SIGNER_ROLE),
+          required: true,
+        },
+        agreedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        ipAddress: {
+          type: String,
+          default: null,
+        },
+        userAgent: {
+          type: String,
+          default: null,
+        },
       },
-      role: {
-        type: String,
-        enum: ['COMPANY', 'COMMITTEE'],
-      },
-      agreedAt: {
-        type: Date,
-        default: Date.now,
-      },
-    }],
+    ],
     status: {
       type: String,
-      enum: ['AGREED', 'SUPERSEDED'],
-      default: 'AGREED',
-      index: true,
+      enum: Object.values(DEAL_AGREEMENT_STATUS),
+      default: DEAL_AGREEMENT_STATUS.AGREED,
     },
   },
   {
@@ -68,4 +91,38 @@ const DealAgreementSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.models.DealAgreement || mongoose.model('DealAgreement', DealAgreementSchema);
+// Indexes per PITCH_DATABASE_FINAL.md Section 18
+dealAgreementSchema.index({ dealId: 1 });
+dealAgreementSchema.index({ acceptedProposalId: 1 });
+
+/**
+ * Pre-save immutability: Snapshot contents cannot be mutated once agreed
+ */
+dealAgreementSchema.pre('save', function (next) {
+  if (!this.isNew && this.isModified('snapshot')) {
+    const err = new Error(
+      'DealAgreement commercial snapshot is immutable once established.'
+    );
+    err.name = 'ValidationError';
+    return next(err);
+  }
+  next();
+});
+
+/**
+ * Forbid deletion of agreed records
+ */
+dealAgreementSchema.pre(
+  ['deleteOne', 'deleteMany', 'findOneAndDelete', 'findByIdAndDelete'],
+  function (next) {
+    const err = new Error(
+      'DealAgreement records are binding commercial audit snapshots and cannot be deleted.'
+    );
+    err.name = 'ValidationError';
+    return next(err);
+  }
+);
+
+const DealAgreement = mongoose.model('DealAgreement', dealAgreementSchema);
+
+module.exports = DealAgreement;

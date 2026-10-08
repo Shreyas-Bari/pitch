@@ -1,22 +1,20 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
-const CommitteeSchema = new mongoose.Schema(
+/**
+ * Committee Model
+ * Collection: committees
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 6
+ */
+const committeeSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Owner User ID is required'],
-      unique: true,
-      index: true,
+      required: [true, 'User ID is required for committee profile'],
     },
     name: {
       type: String,
       required: [true, 'Committee name is required'],
-      trim: true,
-      index: true,
-    },
-    committeeName: {
-      type: String,
       trim: true,
     },
     college: {
@@ -24,27 +22,12 @@ const CommitteeSchema = new mongoose.Schema(
         type: String,
         required: [true, 'College name is required'],
         trim: true,
-        index: true,
       },
       location: {
         city: { type: String, trim: true, default: '' },
         state: { type: String, trim: true, default: '' },
         country: { type: String, trim: true, default: 'India' },
       },
-    },
-    collegeName: {
-      type: String,
-      trim: true,
-    },
-    collegeEmail: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      default: '',
-    },
-    logo: {
-      type: String,
-      default: '',
     },
     logoFileId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -58,25 +41,14 @@ const CommitteeSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      trim: true,
       default: '',
     },
     committeeType: {
       type: String,
       trim: true,
-      default: 'General',
-    },
-    category: {
-      type: String,
-      trim: true,
       default: '',
     },
     website: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    location: {
       type: String,
       trim: true,
       default: '',
@@ -88,11 +60,7 @@ const CommitteeSchema = new mongoose.Schema(
     },
     contact: {
       phone: { type: String, trim: true, default: '' },
-      email: { type: String, trim: true, lowercase: true, default: '' },
     },
-    selfReportedEvents: [{
-      type: mongoose.Schema.Types.Mixed,
-    }],
     isProfileComplete: {
       type: Boolean,
       default: false,
@@ -103,6 +71,12 @@ const CommitteeSchema = new mongoose.Schema(
   }
 );
 
-CommitteeSchema.index({ 'college.location.city': 1 });
+// Explicit indexes per PITCH_DATABASE_FINAL.md Section 6
+committeeSchema.index({ userId: 1 }, { unique: true });
+committeeSchema.index({ name: 1 });
+committeeSchema.index({ 'college.name': 1 });
+committeeSchema.index({ 'college.location.city': 1 });
 
-module.exports = mongoose.models.Committee || mongoose.model('Committee', CommitteeSchema);
+const Committee = mongoose.model('Committee', committeeSchema);
+
+module.exports = Committee;

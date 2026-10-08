@@ -1,57 +1,87 @@
 const mongoose = require('mongoose');
+const { env } = require('./env');
+
+const STATE_MAP = {
+  0: 'disconnected',
+  1: 'connected',
+  2: 'connecting',
+  3: 'disconnecting',
+};
+
+// Configure lifecycle event listeners once
+let listenersConfigured = false;
+function configureLifecycleListeners() {
+  if (listenersConfigured) return;
+  listenersConfigured = true;
+
+  mongoose.connection.on('disconnected', () => {
+    if (env.NODE_ENV !== 'test') {
+      console.warn('[PITCH] MongoDB disconnected.');
+    }
+  });
+
+  mongoose.connection.on('reconnected', () => {
+    if (env.NODE_ENV !== 'test') {
+      console.log('[PITCH] MongoDB reconnected.');
+    }
+  });
+
+  mongoose.connection.on('error', (err) => {
+    console.error('[PITCH] MongoDB connection event error:', err.message);
+  });
+}
 
 /**
- * Connects to MongoDB Atlas using Mongoose.
- * Reads the connection URI from process.env.MONGODB_URI.
+ * Connect to MongoDB Atlas / local instance.
+ * Preserves database connection lifecycle.
  */
-const connectDB = async () => {
-  const uri = process.env.MONGODB_URI;
+async function connectDB() {
+  configureLifecycleListeners();
 
-  if (!uri) {
-    console.warn('[PITCH Database] ⚠️  MONGODB_URI is not set in environment variables.');
-    console.warn('[PITCH Database] Please add your MongoDB Atlas connection string to backend/.env');
-    return null;
+  // If already connected, return existing connection
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
   }
 
   try {
-    const conn = await mongoose.connect(uri, {
-      autoIndex: true,
-      serverSelectionTimeoutMS: 5000,
-    });
-
-    console.log(`[PITCH Database] 🚀 MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error(`[PITCH Database] ❌ MongoDB Connection Error: ${error.message}`);
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1);
+    const conn = await mongoose.connect(env.MONGODB_URI);
+    if (env.NODE_ENV !== 'test') {
+      console.log('[PITCH] MongoDB connected:', conn.connection.host);
     }
-    return null;
+    return conn.connection;
+  } catch (error) {
+    console.error('[PITCH] MongoDB connection error:', error.message);
+    throw error;
   }
-};
+}
 
-// Connection event listeners
-mongoose.connection.on('connected', () => {
-  console.log('[PITCH Database] Mongoose connected to DB');
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error(`[PITCH Database] Mongoose connection error: ${err.message}`);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('[PITCH Database] Mongoose disconnected from DB');
-});
-
-// Graceful application shutdown
-const gracefulExit = async () => {
+/**
+ * Disconnect from MongoDB cleanly (for graceful shutdown and test isolation).
+ */
+async function disconnectDB() {
   if (mongoose.connection.readyState !== 0) {
-    await mongoose.connection.close();
-    console.log('[PITCH Database] Mongoose connection closed through app termination');
+    await mongoose.disconnect();
+    if (env.NODE_ENV !== 'test') {
+      console.log('[PITCH] MongoDB disconnected gracefully.');
+    }
   }
-};
+}
 
-process.on('SIGINT', gracefulExit);
-process.on('SIGTERM', gracefulExit);
+/**
+ * Get current database connection status metadata.
+ */
+function getConnectionStatus() {
+  const readyState = mongoose.connection.readyState;
+  return {
+    state: readyState,
+    stateName: STATE_MAP[readyState] || 'unknown',
+    isConnected: readyState === 1,
+    host: mongoose.connection.host || null,
+    name: mongoose.connection.name || null,
+  };
+}
 
 module.exports = connectDB;
+module.exports.connectDB = connectDB;
+module.exports.disconnectDB = disconnectDB;
+module.exports.getConnectionStatus = getConnectionStatus;

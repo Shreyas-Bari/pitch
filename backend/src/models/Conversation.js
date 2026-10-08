@@ -1,44 +1,37 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const { CONVERSATION_STATUS } = require('../utils/constants');
 
-const ConversationSchema = new mongoose.Schema(
+/**
+ * Conversation Model
+ * Collection: conversations
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 13
+ */
+const conversationSchema = new mongoose.Schema(
   {
     participantCompanyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',
-      required: [true, 'Participant Company ID is required'],
-      index: true,
+      required: [true, 'Participant company ID is required'],
     },
     participantCommitteeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Committee',
-      required: [true, 'Participant Committee ID is required'],
-      index: true,
-    },
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Company',
-    },
-    committeeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Committee',
+      required: [true, 'Participant committee ID is required'],
     },
     eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
       default: null,
-      index: true,
     },
     dealId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Deal',
       default: null,
-      index: true,
     },
     status: {
       type: String,
-      enum: ['ACTIVE', 'ARCHIVED', 'BLOCKED'],
-      default: 'ACTIVE',
-      index: true,
+      enum: Object.values(CONVERSATION_STATUS),
+      default: CONVERSATION_STATUS.ACTIVE,
     },
     lastMessageId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -47,8 +40,7 @@ const ConversationSchema = new mongoose.Schema(
     },
     lastMessageAt: {
       type: Date,
-      default: Date.now,
-      index: true,
+      default: null,
     },
   },
   {
@@ -56,7 +48,12 @@ const ConversationSchema = new mongoose.Schema(
   }
 );
 
-ConversationSchema.index({ participantCompanyId: 1, participantCommitteeId: 1, eventId: 1 });
-ConversationSchema.index({ lastMessageAt: -1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 13 & Section 33
+conversationSchema.index({ participantCompanyId: 1 });
+conversationSchema.index({ participantCommitteeId: 1 });
+conversationSchema.index({ dealId: 1 });
+conversationSchema.index({ lastMessageAt: -1 });
 
-module.exports = mongoose.models.Conversation || mongoose.model('Conversation', ConversationSchema);
+const Conversation = mongoose.model('Conversation', conversationSchema);
+
+module.exports = Conversation;

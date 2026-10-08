@@ -1,18 +1,21 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
-const ContactShareSchema = new mongoose.Schema(
+/**
+ * ContactShare Model
+ * Collection: contactShares
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 15
+ */
+const contactShareSchema = new mongoose.Schema(
   {
     conversationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Conversation',
       required: [true, 'Conversation ID is required'],
-      index: true,
     },
     sharedByUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Sharer User ID is required'],
-      index: true,
+      required: [true, 'User ID sharing contact is required'],
     },
     contact: {
       email: { type: String, trim: true, default: '' },
@@ -26,4 +29,10 @@ const ContactShareSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.models.ContactShare || mongoose.model('ContactShare', ContactShareSchema);
+// Indexes per PITCH_DATABASE_FINAL.md Section 15
+contactShareSchema.index({ conversationId: 1 });
+contactShareSchema.index({ sharedByUserId: 1 });
+
+const ContactShare = mongoose.model('ContactShare', contactShareSchema);
+
+module.exports = ContactShare;

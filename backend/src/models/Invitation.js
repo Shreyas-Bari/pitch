@@ -1,24 +1,27 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
+const { INVITATION_STATUS } = require('../utils/constants');
 
-const InvitationSchema = new mongoose.Schema(
+/**
+ * Invitation Model
+ * Collection: invitations
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 11
+ */
+const invitationSchema = new mongoose.Schema(
   {
     eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
       required: [true, 'Event ID is required'],
-      index: true,
     },
     committeeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Committee',
       required: [true, 'Committee ID is required'],
-      index: true,
     },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',
       required: [true, 'Company ID is required'],
-      index: true,
     },
     packageId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,14 +30,12 @@ const InvitationSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      trim: true,
       default: '',
     },
     status: {
       type: String,
-      enum: ['PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED', 'EXPIRED'],
-      default: 'PENDING',
-      index: true,
+      enum: Object.values(INVITATION_STATUS),
+      default: INVITATION_STATUS.PENDING,
     },
     expiresAt: {
       type: Date,
@@ -50,8 +51,11 @@ const InvitationSchema = new mongoose.Schema(
   }
 );
 
-InvitationSchema.index({ eventId: 1, companyId: 1 });
-InvitationSchema.index({ companyId: 1, status: 1 });
-InvitationSchema.index({ committeeId: 1, status: 1 });
+// Indexes per PITCH_DATABASE_FINAL.md Section 11 & Section 33
+invitationSchema.index({ eventId: 1, companyId: 1 });
+invitationSchema.index({ companyId: 1, status: 1 });
+invitationSchema.index({ committeeId: 1, status: 1 });
 
-module.exports = mongoose.models.Invitation || mongoose.model('Invitation', InvitationSchema);
+const Invitation = mongoose.model('Invitation', invitationSchema);
+
+module.exports = Invitation;
