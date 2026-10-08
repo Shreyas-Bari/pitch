@@ -1,47 +1,14 @@
-const mongoose = require('mongoose');
-const { Event, Committee } = require('../models');
-const { sendSuccess } = require('../utils/apiResponse');
-const ApiError = require('../utils/apiError');
+const eventService = require('../services/eventService');
+const { sendSuccess, sendPaginated } = require('../utils/apiResponse');
 
 /**
  * Event Controller
- * Source: docs/PITCH_API_FINAL.md Section 4 & docs/PITCH_FINAL_BUILD_SPEC.md Section 9.4
+ * Sources: docs/PITCH_API_FINAL.md Section 4, 6 & docs/PITCH_FINAL_BUILD_SPEC.md Section 15, 45, 47
  */
 
 async function createEvent(req, res, next) {
   try {
-    const committee = await Committee.findOne({ userId: req.user._id });
-    if (!committee) {
-      throw ApiError.badRequest('Committee profile must exist before creating events');
-    }
-
-    const {
-      title,
-      slug,
-      description,
-      category,
-      eventType,
-      eventDate,
-      endDate,
-      location,
-      expectedAudience,
-      estimatedReach,
-    } = req.body;
-
-    const event = await Event.create({
-      committeeId: committee._id,
-      title,
-      slug: slug || `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`,
-      description: description || 'Event description',
-      category: category || 'Technology',
-      eventType: eventType || 'Festival',
-      eventDate: eventDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      endDate: endDate || null,
-      location: location || { venue: 'Campus Auditorium', city: committee.college?.location?.city || 'Mumbai' },
-      expectedAudience: expectedAudience || { min: 500, max: 2000 },
-      estimatedReach: estimatedReach || 5000,
-    });
-
+    const event = await eventService.createEvent(req.user._id, req.body);
     return sendSuccess(res, { event }, 201);
   } catch (err) {
     next(err);
@@ -50,15 +17,17 @@ async function createEvent(req, res, next) {
 
 async function getEvent(req, res, next) {
   try {
-    const { eventId } = req.params;
-    if (!eventId || !mongoose.Types.ObjectId.isValid(eventId)) {
-      throw ApiError.badRequest('Invalid event ID format', null, 'INVALID_ID');
-    }
-    const event = await Event.findById(eventId);
-    if (!event) {
-      throw ApiError.notFound('Event not found', null, 'EVENT_NOT_FOUND');
-    }
+    const event = await eventService.getEventById(req.params.eventId, req.user);
     return sendSuccess(res, { event }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function listEvents(req, res, next) {
+  try {
+    const result = await eventService.listEvents(req.query, req.user);
+    return sendPaginated(res, result.events, result.pagination);
   } catch (err) {
     next(err);
   }
@@ -66,20 +35,7 @@ async function getEvent(req, res, next) {
 
 async function updateEvent(req, res, next) {
   try {
-    const event = req.event || (await Event.findById(req.params.eventId));
-    if (!event) {
-      throw ApiError.notFound('Event not found', null, 'EVENT_NOT_FOUND');
-    }
-
-    const { title, description, category, eventDate, estimatedReach, expectedAudience } = req.body;
-    if (title) event.title = title;
-    if (description) event.description = description;
-    if (category) event.category = category;
-    if (eventDate) event.eventDate = eventDate;
-    if (estimatedReach !== undefined) event.estimatedReach = estimatedReach;
-    if (expectedAudience) event.expectedAudience = { ...event.expectedAudience, ...expectedAudience };
-
-    await event.save();
+    const event = await eventService.updateEvent(req.params.eventId, req.user._id, req.user.role, req.body);
     return sendSuccess(res, { event }, 200);
   } catch (err) {
     next(err);
@@ -88,13 +44,89 @@ async function updateEvent(req, res, next) {
 
 async function deleteEvent(req, res, next) {
   try {
-    const event = req.event || (await Event.findById(req.params.eventId));
-    if (!event) {
-      throw ApiError.notFound('Event not found', null, 'EVENT_NOT_FOUND');
-    }
+    const result = await eventService.deleteEvent(req.params.eventId, req.user._id, req.user.role);
+    return sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
 
-    await Event.findByIdAndDelete(event._id);
-    return sendSuccess(res, { message: 'Event deleted successfully' }, 200);
+async function publishEvent(req, res, next) {
+  try {
+    const event = await eventService.publishEvent(req.params.eventId, req.user._id, req.user.role);
+    return sendSuccess(res, { event }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function unpublishEvent(req, res, next) {
+  try {
+    const event = await eventService.unpublishEvent(req.params.eventId, req.user._id, req.user.role);
+    return sendSuccess(res, { event }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function archiveEvent(req, res, next) {
+  try {
+    const event = await eventService.archiveEvent(req.params.eventId, req.user._id, req.user.role);
+    return sendSuccess(res, { event }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getMyCommitteeEvents(req, res, next) {
+  try {
+    const result = await eventService.getMyCommitteeEvents(req.user._id, req.query);
+    return sendPaginated(res, result.events, result.pagination);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function addMedia(req, res, next) {
+  try {
+    const event = await eventService.addMedia(req.params.eventId, req.user._id, req.user.role, req.body.fileId);
+    return sendSuccess(res, { event }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function removeMedia(req, res, next) {
+  try {
+    const event = await eventService.removeMedia(req.params.eventId, req.user._id, req.user.role, req.params.mediaId);
+    return sendSuccess(res, { event }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function saveEvent(req, res, next) {
+  try {
+    const result = await eventService.saveEvent(req.user._id, req.params.eventId);
+    return sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function unsaveEvent(req, res, next) {
+  try {
+    const result = await eventService.unsaveEvent(req.user._id, req.params.eventId);
+    return sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getSavedEvents(req, res, next) {
+  try {
+    const result = await eventService.getSavedEvents(req.user._id, req.query);
+    return sendPaginated(res, result.events, result.pagination);
   } catch (err) {
     next(err);
   }
@@ -103,6 +135,16 @@ async function deleteEvent(req, res, next) {
 module.exports = {
   createEvent,
   getEvent,
+  listEvents,
   updateEvent,
   deleteEvent,
+  publishEvent,
+  unpublishEvent,
+  archiveEvent,
+  getMyCommitteeEvents,
+  addMedia,
+  removeMedia,
+  saveEvent,
+  unsaveEvent,
+  getSavedEvents,
 };

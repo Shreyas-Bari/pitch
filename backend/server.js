@@ -1,8 +1,11 @@
+const http = require('http');
 const app = require('./src/app');
 const { env, validateEnv } = require('./src/config/env');
 const { connectDB, disconnectDB } = require('./src/config/db');
+const { initSocket } = require('./src/sockets/socket');
 
 let server = null;
+let io = null;
 
 /**
  * Start the PITCH HTTP backend server
@@ -15,8 +18,12 @@ async function startServer() {
     // 2. Connect to MongoDB
     await connectDB();
 
-    // 3. Listen on configured PORT
-    server = app.listen(env.PORT, () => {
+    // 3. Create HTTP server and initialize Socket.IO
+    const httpServer = http.createServer(app);
+    io = initSocket(httpServer);
+
+    // 4. Listen on configured PORT
+    server = httpServer.listen(env.PORT, () => {
       console.log(
         `[PITCH] Server running on port ${env.PORT} in ${env.NODE_ENV} mode`
       );

@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const { DEAL_STATUS, DEAL_TRANSITIONS } = require('../utils/constants');
 
 /**
@@ -61,6 +61,22 @@ const dealSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Mou',
       default: null,
+    },
+    contributions: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    benefits: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
+    obligations: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
+    terms: {
+      type: String,
+      default: '',
     },
     agreedAt: {
       type: Date,

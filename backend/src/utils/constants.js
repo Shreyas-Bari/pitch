@@ -100,11 +100,12 @@ const CONVERSATION_STATUS = {
   ARCHIVED: 'ARCHIVED',
 };
 
-// Message types (docs/PITCH_FINAL_BUILD_SPEC.md Section 2.8 & V2 contract)
+// Message types (PITCH_DATABASE_FINAL_V2.md, PITCH_API_FINAL_V2.md & PITCH_FINAL_BUILD_SPEC.md Section 2.8, 20)
 const MESSAGE_TYPE = {
   TEXT: 'TEXT',
   IMAGE: 'IMAGE',
   DOCUMENT: 'DOCUMENT',
+  FILE: 'FILE', // Kept for backwards compatibility
   EVENT_CARD: 'EVENT_CARD',
   PACKAGE_CARD: 'PACKAGE_CARD',
   PROPOSAL: 'PROPOSAL',
@@ -112,7 +113,6 @@ const MESSAGE_TYPE = {
   CONTACT: 'CONTACT',
   MOU_CARD: 'MOU_CARD',
   SYSTEM: 'SYSTEM',
-  FILE: 'FILE',
 };
 
 // Deal state machine statuses (docs/PITCH_DATABASE_FINAL.md Section 16 & Reconciliation Note 1)

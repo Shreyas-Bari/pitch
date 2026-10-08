@@ -1,33 +1,53 @@
 const express = require('express');
 const dealController = require('../controllers/dealController');
 const reviewController = require('../controllers/reviewController');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
 const { requireDealParticipation } = require('../middleware/ownershipMiddleware');
 const { validateRequest } = require('../middleware/validationMiddleware');
 const {
+  validateCreateDeal,
+  validateUpdateDeal,
+  validateCancelDeal,
   validateCreateFulfillment,
   validateCompleteDeal,
   validateCreateDispute,
 } = require('../validators/dealValidator');
+const { validateCreateProposal } = require('../validators/proposalValidator');
+const { validateGenerateMou } = require('../validators/mouValidator');
 const { validateCreateReview } = require('../validators/reviewValidator');
 
 const router = express.Router();
 
 /**
  * Deal Routes
- * Source: docs/PITCH_API_FINAL.md Section 16 & 17
+ * Sources: docs/PITCH_API_FINAL.md Sections 12, 16 & 17
  * Base path: /api/v1/deals
  */
 
-router.use(authMiddleware);
+// All deal routes require authentication
+router.use(authenticate);
 
-// GET /api/v1/deals
-router.get('/', dealController.listDeals);
+// Deal CRUD & listing
+router.post('/', validateRequest({ body: validateCreateDeal }), dealController.createDeal);
+router.get('/', dealController.getDeals);
+router.get('/:dealId', dealController.getDealById);
+router.patch('/:dealId', validateRequest({ body: validateUpdateDeal }), dealController.updateDeal);
 
-// GET /api/v1/deals/:dealId
-router.get('/:dealId', requireDealParticipation(), dealController.getDeal);
+// Deal lifecycle transitions
+router.get('/:dealId/timeline', dealController.getDealTimeline);
+router.post('/:dealId/cancel', validateRequest({ body: validateCancelDeal }), dealController.cancelDeal);
+router.post('/:dealId/agree', dealController.agreeDeal);
+router.get('/:dealId/agreement', dealController.getDealAgreement);
 
-// Fulfillment on deal
+// Nested Proposal routes
+router.get('/:dealId/proposals', dealController.getProposals);
+router.post('/:dealId/proposals', validateRequest({ body: validateCreateProposal }), dealController.createProposal);
+
+// Nested MoU routes
+router.get('/:dealId/mou', dealController.getMou);
+router.post('/:dealId/mou', validateRequest({ body: validateGenerateMou }), dealController.generateMou);
+
+// Fulfillment routes
 router.get(
   '/:dealId/fulfillment',
   requireDealParticipation(),
@@ -40,7 +60,7 @@ router.post(
   dealController.addFulfillment
 );
 
-// Completion on deal
+// Completion routes
 router.get(
   '/:dealId/completion',
   requireDealParticipation(),
@@ -53,7 +73,7 @@ router.post(
   dealController.completeDeal
 );
 
-// Disputes on deal
+// Disputes routes
 router.get(
   '/:dealId/disputes',
   requireDealParticipation(),

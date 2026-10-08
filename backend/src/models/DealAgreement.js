@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const { DEAL_AGREEMENT_STATUS, SIGNER_ROLE } = require('../utils/constants');
 
 /**
@@ -108,6 +108,25 @@ dealAgreementSchema.pre('save', function (next) {
   }
   next();
 });
+
+/**
+ * Forbid mutating agreed snapshot via query updates
+ */
+dealAgreementSchema.pre(
+  ['updateOne', 'updateMany', 'findOneAndUpdate', 'findByIdAndUpdate'],
+  function (next) {
+    const update = this.getUpdate();
+    const modifiedKeys = Object.keys(update?.$set || update || {});
+    if (modifiedKeys.some((k) => k === 'snapshot' || k.startsWith('snapshot.'))) {
+      const err = new Error(
+        'DealAgreement commercial snapshot is immutable once established and cannot be updated.'
+      );
+      err.name = 'ValidationError';
+      return next(err);
+    }
+    next();
+  }
+);
 
 /**
  * Forbid deletion of agreed records

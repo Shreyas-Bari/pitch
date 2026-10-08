@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const { MESSAGE_TYPE } = require('../utils/constants');
 
 /**
@@ -37,6 +37,41 @@ const messageSchema = new mongoose.Schema(
       ref: 'Message',
       default: null,
     },
+    // Structured card fields (PITCH_FINAL_BUILD_SPEC.md Section 20 & PITCH_DATABASE_FINAL_V2.md)
+    eventId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event',
+      default: null,
+    },
+    packageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'SponsorshipPackage',
+      default: null,
+    },
+    proposalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Proposal',
+      default: null,
+    },
+    dealId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Deal',
+      default: null,
+    },
+    mouId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MoU',
+      default: null,
+    },
+    contactShareId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ContactShare',
+      default: null,
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
     editedAt: {
       type: Date,
       default: null,
@@ -67,6 +102,7 @@ const messageSchema = new mongoose.Schema(
 // Indexes per PITCH_DATABASE_FINAL.md Section 14 & Section 33
 messageSchema.index({ conversationId: 1, createdAt: 1 });
 messageSchema.index({ senderUserId: 1 });
+messageSchema.index({ conversationId: 1, type: 1 });
 
 const Message = mongoose.model('Message', messageSchema);
 
