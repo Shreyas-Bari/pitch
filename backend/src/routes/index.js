@@ -6,6 +6,7 @@ const adminRoutes = require('./adminRoutes');
 const companyRoutes = require('./companyRoutes');
 const committeeRoutes = require('./committeeRoutes');
 const eventRoutes = require('./eventRoutes');
+// Phase 7-15 Marketplace, Communication & Discovery Routes
 const packageRoutes = require('./packageRoutes');
 const searchRoutes = require('./searchRoutes');
 const applicationRoutes = require('./applicationRoutes');
@@ -16,6 +17,11 @@ const messageRoutes = require('./messageRoutes');
 const searchController = require('../controllers/searchController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { requireCompany, requireCommittee } = require('../middleware/roleMiddleware');
+
+// Phase 16-22 Deal, Proposal & MoU Routes
+const dealRoutes = require('./dealRoutes');
+const proposalRoutes = require('./proposalRoutes');
+const mouRoutes = require('./mouRoutes');
 
 const router = express.Router();
 
@@ -56,11 +62,21 @@ v1Router.use('/notifications', notificationRoutes);
 v1Router.use('/conversations', conversationRoutes);
 v1Router.use('/messages', messageRoutes);
 
+// Deal, Proposal, MoU & Signature Workflow Endpoints (Phases 16 - 22)
+v1Router.use('/deals', dealRoutes);
+v1Router.use('/proposals', proposalRoutes);
+v1Router.use('/mous', mouRoutes);
+v1Router.use('/mou', mouRoutes); // Convenience alias
+
 // Mount /api/v1 versioned path
 router.use('/api/v1', v1Router);
 
 // Mount backward-compatible / unversioned aliases
 router.use('/api/health', healthRoutes);
 router.use('/api/auth', authRoutes);
+router.use('/api/deals', dealRoutes);
+router.use('/api/proposals', proposalRoutes);
+router.use('/api/mous', mouRoutes);
+router.use('/api/mou', mouRoutes);
 
 module.exports = router;

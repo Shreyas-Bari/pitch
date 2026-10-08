@@ -723,12 +723,13 @@ async function runMarketplaceTests() {
 
     // Test unauthorized socket join
     let joinDenied = false;
+    let unauthorizedPromise;
     const mockUnauthorizedSocket = {
       user: userCompB, // Company B is not a participant in conv1
       join: () => { throw new Error('Unauthorized socket should not join room'); },
       on: function(event, handler) {
         if (event === 'conversation:join') {
-          handler({ conversationId: String(conv1._id) }, (res) => {
+          unauthorizedPromise = handler({ conversationId: String(conv1._id) }, (res) => {
             if (res && res.error && res.status === 403) {
               joinDenied = true;
             }
@@ -737,8 +738,9 @@ async function runMarketplaceTests() {
       },
     };
     registerChatHandlers(null, mockUnauthorizedSocket);
-    // Allow async handler to run
-    await new Promise(r => setTimeout(r, 50));
+    if (unauthorizedPromise) await unauthorizedPromise;
+    else await new Promise(r => setTimeout(r, 200));
+
     if (!joinDenied) {
       throw new Error('Expected socket.io conversation:join to be rejected with 403 for outsider');
     }
@@ -746,13 +748,14 @@ async function runMarketplaceTests() {
 
     // Test authorized socket join
     let joinSuccess = false;
+    let authorizedPromise;
     const joinedRooms = [];
     const mockAuthorizedSocket = {
       user: userCompA, // Company A is participant
       join: (room) => { joinedRooms.push(room); },
       on: function(event, handler) {
         if (event === 'conversation:join') {
-          handler({ conversationId: String(conv1._id) }, (res) => {
+          authorizedPromise = handler({ conversationId: String(conv1._id) }, (res) => {
             if (res && res.success) {
               joinSuccess = true;
             }
@@ -761,7 +764,9 @@ async function runMarketplaceTests() {
       },
     };
     registerChatHandlers(null, mockAuthorizedSocket);
-    await new Promise(r => setTimeout(r, 50));
+    if (authorizedPromise) await authorizedPromise;
+    else await new Promise(r => setTimeout(r, 200));
+
     if (!joinSuccess || !joinedRooms.includes(`conversation:${conv1._id}`)) {
       throw new Error('Expected authorized participant to join conversation room');
     }

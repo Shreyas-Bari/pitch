@@ -284,9 +284,90 @@ function requireOwnership(config = {}) {
   };
 }
 
+function requireDealParticipant(options = {}) {
+  const paramName = options.paramName || 'dealId';
+  const allowAdmin = options.allowAdmin !== false;
+
+  return async (req, _res, next) => {
+    try {
+      if (!req.user) {
+        return next(ApiError.unauthorized('Authentication required.', null, 'UNAUTHORIZED'));
+      }
+
+      const dealId = req.params[paramName] || req.params.id;
+      if (!dealId || !mongoose.Types.ObjectId.isValid(dealId)) {
+        return next(ApiError.badRequest('Invalid deal ID format', null, 'INVALID_ID'));
+      }
+
+      const Deal = mongoose.model('Deal');
+      const deal = await Deal.findById(dealId);
+      if (!deal) {
+        return next(ApiError.notFound('Deal not found', null, 'DEAL_NOT_FOUND'));
+      }
+
+      if (allowAdmin && req.user.role === ROLES.ADMIN) {
+        req.deal = deal;
+        req.resource = deal;
+        return next();
+      }
+
+      let isParticipant = false;
+      let participantRole = null;
+
+      if (req.user.role === ROLES.COMPANY) {
+        const Company = mongoose.model('Company');
+        const company = await Company.findOne({ userId: req.user._id });
+        if (
+          company &&
+          deal.companyId &&
+          (deal.companyId.equals
+            ? deal.companyId.equals(company._id)
+            : deal.companyId.toString() === company._id.toString())
+        ) {
+          isParticipant = true;
+          participantRole = ROLES.COMPANY;
+          req.company = company;
+        }
+      } else if (req.user.role === ROLES.COMMITTEE) {
+        const Committee = mongoose.model('Committee');
+        const committee = await Committee.findOne({ userId: req.user._id });
+        if (
+          committee &&
+          deal.committeeId &&
+          (deal.committeeId.equals
+            ? deal.committeeId.equals(committee._id)
+            : deal.committeeId.toString() === committee._id.toString())
+        ) {
+          isParticipant = true;
+          participantRole = ROLES.COMMITTEE;
+          req.committee = committee;
+        }
+      }
+
+      if (!isParticipant) {
+        return next(
+          ApiError.forbidden(
+            'Access denied. You are not an authorized participant in this deal.',
+            null,
+            'FORBIDDEN'
+          )
+        );
+      }
+
+      req.deal = deal;
+      req.participantRole = participantRole;
+      req.resource = deal;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 module.exports = {
   requireCompanyOwnership,
   requireCommitteeOwnership,
   requireEventOwnership,
   requireOwnership,
+  requireDealParticipant,
 };
