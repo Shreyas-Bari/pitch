@@ -1,3 +1,1 @@
-// useNotifications — placeholder
-// TODO: Implement in subsequent build phases
-
+export { useNotifications } from '../context/NotificationContext';

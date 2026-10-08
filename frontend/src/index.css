@@ -5,19 +5,23 @@
 @tailwind utilities;
 
 /* ============================================
-   PITCH — Base Styles
-   Design tokens from PITCH_UI_SPEC_FINAL.md
+   PITCH — Design System Foundations
+   Specification: docs/PITCH_UI_SPEC_FINAL.md
    ============================================ */
 
 :root {
   /* Typography */
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  /* PITCH palette */
+  /* PITCH Color Tokens */
   --pitch-canvas: #F8F9FF;
   --pitch-surface: #FFFFFF;
+  --pitch-surface-1: #EFF4FF;
+  --pitch-surface-2: #E5EEFF;
+  --pitch-surface-3: #DCE9FF;
+  --pitch-surface-4: #D3E4FE;
   --pitch-text: #0B1C30;
   --pitch-muted: #45464D;
   --pitch-outline: #76777D;
@@ -26,6 +30,9 @@
   --pitch-blue: #2563EB;
   --pitch-blue-hover: #3B82F6;
   --pitch-error: #BA1A1A;
+  --pitch-success: #16A34A;
+  --pitch-warning: #D97706;
+  --pitch-info: #0284C7;
 
   color: var(--pitch-text);
   background-color: var(--pitch-canvas);
@@ -40,15 +47,58 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #F8F9FF;
+  color: #0B1C30;
 }
 
-/* Smooth scroll */
+/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Focus outline for accessibility */
+/* Accessible focus ring */
 *:focus-visible {
-  outline: 2px solid var(--pitch-blue);
+  outline: 2px solid #2563EB;
   outline-offset: 2px;
+}
+
+/* Restrained Glassmorphism utilities (~10% glass principle) */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
