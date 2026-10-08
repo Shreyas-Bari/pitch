@@ -1,6 +1,6 @@
 const { ROLES } = require('../utils/constants');
 const ApiError = require('../utils/apiError');
-const { Company, Committee, Event } = require('../models');
+const { Company, Committee, Event, Deal } = require('../models');
 
 /**
  * Authorization Service
@@ -138,6 +138,39 @@ async function verifyEventOwnership(userId, eventId) {
   return { isOwner, event, committee };
 }
 
+/**
+ * Programmatic verification of deal participation.
+ * Allows deal participants (Company owner or Committee owner) and Admin.
+ * @param {string|ObjectId} userId
+ * @param {string|ObjectId} dealId
+ * @param {string} role - user's role
+ * @returns {Promise<{ isParticipant: boolean, participantRole: string, deal: Object, company: Object, committee: Object }>}
+ */
+async function verifyDealParticipation(userId, dealId, role) {
+  const deal = await Deal.findById(dealId);
+  if (!deal) {
+    throw ApiError.notFound('Deal not found', null, 'DEAL_NOT_FOUND');
+  }
+
+  if (role === ROLES.ADMIN) {
+    return { isParticipant: true, participantRole: ROLES.ADMIN, deal, company: null, committee: null };
+  }
+
+  if (role === ROLES.COMPANY) {
+    const company = await Company.findOne({ userId });
+    if (company && deal.companyId.equals(company._id)) {
+      return { isParticipant: true, participantRole: ROLES.COMPANY, deal, company, committee: null };
+    }
+  } else if (role === ROLES.COMMITTEE) {
+    const committee = await Committee.findOne({ userId });
+    if (committee && deal.committeeId.equals(committee._id)) {
+      return { isParticipant: true, participantRole: ROLES.COMMITTEE, deal, company: null, committee };
+    }
+  }
+
+  return { isParticipant: false, participantRole: null, deal, company: null, committee: null };
+}
+
 module.exports = {
   assertRole,
   assertOwnership,
@@ -147,4 +180,6 @@ module.exports = {
   verifyCompanyOwnership,
   verifyCommitteeOwnership,
   verifyEventOwnership,
+  verifyDealParticipation,
 };
+

@@ -6,6 +6,11 @@ const adminRoutes = require('./adminRoutes');
 const companyRoutes = require('./companyRoutes');
 const committeeRoutes = require('./committeeRoutes');
 const eventRoutes = require('./eventRoutes');
+const dealRoutes = require('./dealRoutes');
+const fulfillmentRoutes = require('./fulfillmentRoutes');
+const reviewRoutes = require('./reviewRoutes');
+const reportRoutes = require('./reportRoutes');
+const notificationRoutes = require('./notificationRoutes');
 
 const router = express.Router();
 
@@ -29,6 +34,13 @@ v1Router.use('/admin', adminRoutes);
 v1Router.use('/companies', companyRoutes);
 v1Router.use('/committees', committeeRoutes);
 v1Router.use('/events', eventRoutes);
+
+// Post-agreement, fulfillment, completion, review, disputes & notification endpoints
+v1Router.use('/deals', dealRoutes);
+v1Router.use('/fulfillment', fulfillmentRoutes);
+v1Router.use('/reviews', reviewRoutes);
+v1Router.use('/reports', reportRoutes);
+v1Router.use('/notifications', notificationRoutes);
 
 // Mount /api/v1 versioned path
 router.use('/api/v1', v1Router);

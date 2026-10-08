@@ -12,7 +12,8 @@
     "test:auth": "node testAuth.js",
     "test:authz": "node testAuthz.js",
     "test:phase6": "node testPhase6.js",
-    "test": "node testModels.js && node testPhase3.js && node testAuth.js && node testAuthz.js && node testPhase6.js"
+    "test:post-agreement": "node testPostAgreement.js",
+    "test": "node testModels.js && node testPhase3.js && node testAuth.js && node testAuthz.js && node testPhase6.js && node testPostAgreement.js"
   },
   "keywords": [
     "pitch",
