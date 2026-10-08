@@ -1,3 +1,1 @@
-// useSocket — placeholder
-// TODO: Implement in subsequent build phases
-
+export { useSocket } from '../context/SocketContext';

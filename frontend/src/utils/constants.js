@@ -1,5 +1,6 @@
-﻿/**
- * PITCH constants shared across the frontend.
+/**
+ * PITCH Shared Frontend Constants
+ * Authoritative source: docs/PITCH_DATABASE_FINAL.md & docs/PITCH_API_FINAL.md
  */
 
 // Application roles
@@ -9,7 +10,32 @@ export const ROLES = {
   ADMIN: 'ADMIN',
 };
 
-// Event statuses
+// User account statuses
+export const USER_STATUS = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  PENDING: 'PENDING',
+  DEACTIVATED: 'DEACTIVATED',
+};
+
+// Report target types & statuses
+export const REPORT_TARGET_TYPE = {
+  USER: 'USER',
+  EVENT: 'EVENT',
+  MESSAGE: 'MESSAGE',
+  DEAL: 'DEAL',
+  COMPANY: 'COMPANY',
+  COMMITTEE: 'COMMITTEE',
+};
+
+export const REPORT_STATUS = {
+  OPEN: 'OPEN',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  RESOLVED: "RESOLVED",
+  DISMISSED: 'DISMISSED',
+};
+
+// Event lifecycle statuses
 export const EVENT_STATUS = {
   DRAFT: 'DRAFT',
   PUBLISHED: 'PUBLISHED',
@@ -18,7 +44,7 @@ export const EVENT_STATUS = {
   ARCHIVED: 'ARCHIVED',
 };
 
-// Deal statuses
+// Deal lifecycle statuses
 export const DEAL_STATUS = {
   INTERESTED: 'INTERESTED',
   DISCUSSION: 'DISCUSSION',
@@ -46,6 +72,22 @@ export const APPLICATION_STATUS = {
   WITHDRAWN: 'WITHDRAWN',
 };
 
+// Invitation statuses
+export const INVITATION_STATUS = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+};
+
+// Fulfillment statuses
+export const FULFILLMENT_STATUS = {
+  PENDING: 'PENDING',
+  PARTIALLY_FULFILLED: 'PARTIALLY_FULFILLED',
+  FULFILLED: 'FULFILLED',
+  DISPUTED: 'DISPUTED',
+};
+
 // Contribution types
 export const CONTRIBUTION_TYPES = [
   'CASH',
@@ -61,6 +103,79 @@ export const CONTRIBUTION_TYPES = [
   'OTHER',
 ];
 
-// App info
-export const APP_NAME = 'PITCH';
-export const APP_TAGLINE = 'Where Brands Meet Campus Communities';
+// Message types
+export const MESSAGE_TYPES = {
+  TEXT: 'TEXT',
+  IMAGE: 'IMAGE',
+  DOCUMENT: 'DOCUMENT',
+  EVENT_CARD: 'EVENT_CARD',
+  PACKAGE_CARD: 'PACKAGE_CARD',
+  PROPOSAL: 'PROPOSAL',
+  COUNTER_PROPOSAL: 'COUNTER_PROPOSAL',
+  CONTACT: 'CONTACT',
+  MOU_CARD: 'MOU_CARD',
+  SYSTEM: 'SYSTEM',
+};
+
+// Proposal lifecycle statuses
+export const PROPOSAL_STATUS = {
+  DRAFT: 'DRAFT',
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
+  SUPERSEDED: 'SUPERSEDED',
+};
+
+// Strict transition graph for Proposal negotiation lifecycle
+export const PROPOSAL_TRANSITIONS = {
+  DRAFT: ['PENDING', 'WITHDRAWN'],
+  PENDING: ['ACCEPTED', 'REJECTED', 'WITHDRAWN', 'SUPERSEDED'],
+  ACCEPTED: [],
+  REJECTED: [],
+  WITHDRAWN: [],
+  SUPERSEDED: [],
+};
+
+// Strict transition graph for the Deal state machine
+export const DEAL_TRANSITIONS = {
+  INTERESTED: ['DISCUSSION', 'DECLINED', 'CANCELLED', 'EXPIRED'],
+  DISCUSSION: ['NEGOTIATING', 'DECLINED', 'CANCELLED', 'EXPIRED'],
+  NEGOTIATING: ['PROPOSAL', 'DECLINED', 'CANCELLED', 'EXPIRED'],
+  PROPOSAL: ['COUNTER_PROPOSAL', 'AGREED', 'NEGOTIATING', 'DECLINED', 'CANCELLED', 'EXPIRED'],
+  COUNTER_PROPOSAL: ['PROPOSAL', 'AGREED', 'NEGOTIATING', 'DECLINED', 'CANCELLED', 'EXPIRED'],
+  AGREED: ['MOU_DRAFT', 'NEGOTIATING', 'CANCELLED', 'DISPUTED'],
+  MOU_DRAFT: ['AWAITING_SIGNATURES', 'NEGOTIATING', 'CANCELLED', 'DISPUTED'],
+  AWAITING_SIGNATURES: ['PARTIALLY_SIGNED', 'EXECUTED', 'MOU_DRAFT', 'CANCELLED', 'DISPUTED'],
+  PARTIALLY_SIGNED: ['EXECUTED', 'CANCELLED', 'DISPUTED'],
+  EXECUTED: ['FULFILLMENT', 'COMPLETED', 'DISPUTED', 'CANCELLED'],
+  FULFILLMENT: ['COMPLETED', 'DISPUTED', 'CANCELLED'],
+  COMPLETED: [],
+  DECLINED: [],
+  CANCELLED: [],
+  DISPUTED: ['FULFILLMENT', 'COMPLETED', 'CANCELLED'],
+  EXPIRED: [],
+};
+
+// MoU container statuses
+export const MOU_STATUS = {
+  DRAFT: 'DRAFT',
+  PENDING_SIGNATURE: 'PENDING_SIGNATURE',
+  PARTIALLY_SIGNED: 'PARTIALLY_SIGNED',
+  EXECUTED: 'EXECUTED',
+  VOID: 'VOID',
+};
+
+// MoU Version statuses
+export const MOU_VERSION_STATUS = {
+  DRAFT: 'DRAFT',
+  READY_FOR_SIGNATURE: 'READY_FOR_SIGNATURE',
+  PARTIALLY_SIGNED: 'PARTIALLY_SIGNED',
+  EXECUTED: 'EXECUTED',
+  VOID: 'VOID',
+};
+
+// Application brand identity
+export const APP_NAME = import.meta?.env?.VITE_APP_NAME || 'PITCH';
+export const APP_TAGLINE =
+  import.meta?.env?.VITE_APP_TAGLINE || 'Where Brands Meet Campus Communities';
