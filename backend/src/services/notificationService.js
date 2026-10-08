@@ -10,6 +10,11 @@ function setSocketIo(io) {
   socketIoInstance = io;
 }
 
+/**
+ * Notification Service
+ * Source: docs/PITCH_DATABASE_FINAL.md Section 27 & docs/PITCH_API_FINAL.md Section 18
+ */
+
 async function createNotification({ recipientUserId, type, title, message, entityType = null, entityId = null }) {
   if (!recipientUserId || !mongoose.Types.ObjectId.isValid(recipientUserId)) {
     return null;
@@ -18,8 +23,8 @@ async function createNotification({ recipientUserId, type, title, message, entit
   const notification = await Notification.create({
     recipientUserId,
     type,
-    title: title.trim(),
-    message: message.trim(),
+    title: (title || '').trim(),
+    message: (message || '').trim(),
     entityType,
     entityId: entityId ? new mongoose.Types.ObjectId(entityId) : null,
     readAt: null,
@@ -39,7 +44,7 @@ async function getUserNotifications(userId, query = {}) {
   const skip = (page - 1) * limit;
 
   const filter = { recipientUserId: userId };
-  if (query.unreadOnly === 'true' || query.unreadOnly === true) {
+  if (query.unreadOnly === 'true' || query.unreadOnly === true || query.unread === 'true' || query.unread === true) {
     filter.readAt = null;
   }
 
@@ -48,11 +53,13 @@ async function getUserNotifications(userId, query = {}) {
     Notification.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
   ]);
 
   return {
     notifications,
+    data: notifications,
     pagination: {
       page,
       limit,
@@ -71,22 +78,18 @@ async function getUnreadCount(userId) {
 }
 
 async function markAsRead(notificationId, userId) {
-  if (!mongoose.Types.ObjectId.isValid(notificationId)) {
+  if (!notificationId || !mongoose.Types.ObjectId.isValid(notificationId)) {
     throw ApiError.badRequest('Invalid notification ID format', null, 'INVALID_ID');
   }
 
-  const notification = await Notification.findOne({
-    _id: notificationId,
-    recipientUserId: userId,
-  });
+  const notification = await Notification.findOneAndUpdate(
+    { _id: notificationId, recipientUserId: userId },
+    { $set: { readAt: new Date() } },
+    { new: true }
+  );
 
   if (!notification) {
     throw ApiError.notFound('Notification not found', null, 'NOTIFICATION_NOT_FOUND');
-  }
-
-  if (!notification.readAt) {
-    notification.readAt = new Date();
-    await notification.save();
   }
 
   return notification;
@@ -102,7 +105,7 @@ async function markAllAsRead(userId) {
 }
 
 async function deleteNotification(notificationId, userId) {
-  if (!mongoose.Types.ObjectId.isValid(notificationId)) {
+  if (!notificationId || !mongoose.Types.ObjectId.isValid(notificationId)) {
     throw ApiError.badRequest('Invalid notification ID format', null, 'INVALID_ID');
   }
 

@@ -23,6 +23,11 @@ const dealRoutes = require('./dealRoutes');
 const proposalRoutes = require('./proposalRoutes');
 const mouRoutes = require('./mouRoutes');
 
+// Phase 23-31 Fulfillment, Reviews, Reports & Audit
+const fulfillmentRoutes = require('./fulfillmentRoutes');
+const reviewRoutes = require('./reviewRoutes');
+const reportRoutes = require('./reportRoutes');
+
 const router = express.Router();
 
 /**
@@ -67,6 +72,11 @@ v1Router.use('/deals', dealRoutes);
 v1Router.use('/proposals', proposalRoutes);
 v1Router.use('/mous', mouRoutes);
 v1Router.use('/mou', mouRoutes); // Convenience alias
+
+// Post-agreement, fulfillment, reviews & reports (Phases 23 - 31)
+v1Router.use('/fulfillment', fulfillmentRoutes);
+v1Router.use('/reviews', reviewRoutes);
+v1Router.use('/reports', reportRoutes);
 
 // Mount /api/v1 versioned path
 router.use('/api/v1', v1Router);

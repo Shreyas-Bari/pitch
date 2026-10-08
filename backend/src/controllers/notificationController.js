@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const notificationService = require('../services/notificationService');
 const { sendSuccess, sendPaginated } = require('../utils/apiResponse');
+const ApiError = require('../utils/apiError');
 
 /**
  * Notification Controller
@@ -8,8 +10,12 @@ const { sendSuccess, sendPaginated } = require('../utils/apiResponse');
 
 async function listNotifications(req, res, next) {
   try {
-    const result = await notificationService.getUserNotifications(req.user._id, req.query);
-    return sendPaginated(res, result.notifications, result.pagination);
+    const unreadOnly = req.query.unreadOnly || req.query.unread;
+    const result = await notificationService.getUserNotifications(req.user._id, {
+      ...req.query,
+      unreadOnly,
+    });
+    return sendPaginated(res, result.notifications || result.data, result.pagination);
   } catch (err) {
     next(err);
   }
@@ -26,8 +32,9 @@ async function getUnreadCount(req, res, next) {
 
 async function markAsRead(req, res, next) {
   try {
-    const notification = await notificationService.markAsRead(req.params.notificationId, req.user._id);
-    return sendSuccess(res, { notification }, 200);
+    const notificationId = req.params.notificationId || req.params.id;
+    const notification = await notificationService.markAsRead(notificationId, req.user._id);
+    return sendSuccess(res, { notification, ...(notification.toObject ? notification.toObject() : notification) }, 200);
   } catch (err) {
     next(err);
   }
@@ -44,7 +51,8 @@ async function markAllAsRead(req, res, next) {
 
 async function deleteNotification(req, res, next) {
   try {
-    const result = await notificationService.deleteNotification(req.params.notificationId, req.user._id);
+    const notificationId = req.params.notificationId || req.params.id;
+    const result = await notificationService.deleteNotification(notificationId, req.user._id);
     return sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -53,6 +61,7 @@ async function deleteNotification(req, res, next) {
 
 module.exports = {
   listNotifications,
+  getNotifications: listNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,

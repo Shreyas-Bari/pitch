@@ -1,5 +1,6 @@
 const express = require('express');
 const committeeController = require('../controllers/committeeController');
+const reviewController = require('../controllers/reviewController');
 const eventController = require('../controllers/eventController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { requireCommitteeOwnership } = require('../middleware/ownershipMiddleware');
@@ -107,4 +108,9 @@ router.patch(
   committeeController.updateCommittee
 );
 
+// 8. Reviews and verified history
+router.get('/:committeeId/reviews', reviewController.getCommitteeReviews);
+router.get('/:committeeId/verified-history', reviewController.getCommitteeVerifiedHistory);
+
 module.exports = router;
+

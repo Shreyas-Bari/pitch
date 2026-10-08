@@ -5,10 +5,51 @@
 # Dependencies
 node_modules/
 
-# Environment variables (secrets)
+# Environment variables & local environments
 .env
 .env.local
 .env.*.local
+.env*.local
+*.env
+!*.env.example
+
+# Generated local secrets & credentials
+secrets/
+local-secrets/
+*.secret
+*.secrets
+secrets.*
+*.local.json
+
+# Private keys & certificates
+*.pem
+*.key
+*.pkcs12
+*.pfx
+*.cer
+*.crt
+id_rsa*
+id_ed25519*
+
+# JWT secrets & refresh tokens
+jwt-secret*
+*.jwt*
+*token*.json
+*token*.secret
+tokens/
+refresh-tokens/
+
+# Cloudinary credentials
+*cloudinary*.json
+*cloudinary*.secret*
+cloudinary_credentials*
+
+# MongoDB data & database dumps
+data/
+data/db/
+mongo-data/
+dump/
+*.mongo
 
 # Build output
 dist/

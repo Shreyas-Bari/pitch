@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { Company, Committee, Event } = require('../models');
+const { Company, Committee, Event, Deal } = require('../models');
 const { ROLES } = require('../utils/constants');
 const ApiError = require('../utils/apiError');
 
@@ -284,6 +284,13 @@ function requireOwnership(config = {}) {
   };
 }
 
+/**
+ * Enforce that the authenticated user is a participant in the requested Deal (or ADMIN).
+ * @param {Object} [options]
+ * @param {string} [options.paramName='dealId']
+ * @param {boolean} [options.allowAdmin=true]
+ * @returns {Function} Express middleware
+ */
 function requireDealParticipant(options = {}) {
   const paramName = options.paramName || 'dealId';
   const allowAdmin = options.allowAdmin !== false;
@@ -308,6 +315,7 @@ function requireDealParticipant(options = {}) {
       if (allowAdmin && req.user.role === ROLES.ADMIN) {
         req.deal = deal;
         req.resource = deal;
+        req.participantRole = ROLES.ADMIN;
         return next();
       }
 
@@ -347,7 +355,7 @@ function requireDealParticipant(options = {}) {
       if (!isParticipant) {
         return next(
           ApiError.forbidden(
-            'Access denied. You are not an authorized participant in this deal.',
+            'Access denied. You are not a participant in this deal.',
             null,
             'FORBIDDEN'
           )
@@ -370,4 +378,6 @@ module.exports = {
   requireEventOwnership,
   requireOwnership,
   requireDealParticipant,
+  requireDealParticipation: requireDealParticipant,
 };
+

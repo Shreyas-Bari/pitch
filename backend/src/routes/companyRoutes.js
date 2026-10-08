@@ -1,5 +1,6 @@
 const express = require('express');
 const companyController = require('../controllers/companyController');
+const reviewController = require('../controllers/reviewController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { requireCompanyOwnership } = require('../middleware/ownershipMiddleware');
 const { requireCompany } = require('../middleware/roleMiddleware');
@@ -105,4 +106,9 @@ router.patch(
   companyController.updateCompany
 );
 
+// 8. Reviews and verified history
+router.get('/:companyId/reviews', reviewController.getCompanyReviews);
+router.get('/:companyId/verified-history', reviewController.getCompanyVerifiedHistory);
+
 module.exports = router;
+
