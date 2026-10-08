@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 /**
  * Committee Model
@@ -60,6 +60,7 @@ const committeeSchema = new mongoose.Schema(
     },
     contact: {
       phone: { type: String, trim: true, default: '' },
+      email: { type: String, trim: true, default: '' },
     },
     isProfileComplete: {
       type: Boolean,

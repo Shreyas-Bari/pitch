@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const { CONTRIBUTION_TYPES } = require('../utils/constants');
 
 /**
@@ -54,6 +54,7 @@ const companySchema = new mongoose.Schema(
     },
     contact: {
       phone: { type: String, trim: true, default: '' },
+      email: { type: String, trim: true, default: '' },
     },
     socialLinks: {
       linkedin: { type: String, trim: true, default: '' },
