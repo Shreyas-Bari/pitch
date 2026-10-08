@@ -6,6 +6,16 @@ const adminRoutes = require('./adminRoutes');
 const companyRoutes = require('./companyRoutes');
 const committeeRoutes = require('./committeeRoutes');
 const eventRoutes = require('./eventRoutes');
+const packageRoutes = require('./packageRoutes');
+const searchRoutes = require('./searchRoutes');
+const applicationRoutes = require('./applicationRoutes');
+const invitationRoutes = require('./invitationRoutes');
+const notificationRoutes = require('./notificationRoutes');
+const conversationRoutes = require('./conversationRoutes');
+const messageRoutes = require('./messageRoutes');
+const searchController = require('../controllers/searchController');
+const { authMiddleware } = require('../middleware/authMiddleware');
+const { requireCompany, requireCommittee } = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
@@ -28,7 +38,23 @@ v1Router.use('/users', userRoutes);
 v1Router.use('/admin', adminRoutes);
 v1Router.use('/companies', companyRoutes);
 v1Router.use('/committees', committeeRoutes);
+
+// Marketplace, Discovery & Communication Endpoints (Phases 7-15)
 v1Router.use('/events', eventRoutes);
+v1Router.use('/packages', packageRoutes);
+v1Router.use('/search', searchRoutes);
+
+// Recommendations (/api/v1/recommendations/events and /api/v1/recommendations/companies)
+const recommendationsRouter = express.Router();
+recommendationsRouter.get('/events', authMiddleware, requireCompany, searchController.getEventRecommendations);
+recommendationsRouter.get('/companies', authMiddleware, requireCommittee, searchController.getCompanyRecommendations);
+v1Router.use('/recommendations', recommendationsRouter);
+
+v1Router.use('/applications', applicationRoutes);
+v1Router.use('/invitations', invitationRoutes);
+v1Router.use('/notifications', notificationRoutes);
+v1Router.use('/conversations', conversationRoutes);
+v1Router.use('/messages', messageRoutes);
 
 // Mount /api/v1 versioned path
 router.use('/api/v1', v1Router);
