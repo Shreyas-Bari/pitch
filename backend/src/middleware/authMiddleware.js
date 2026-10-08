@@ -1,4 +1,4 @@
-﻿const { verifyAccessToken } = require('../utils/jwt');
+const { verifyAccessToken } = require('../utils/jwt');
 const User = require('../models/User');
 const { USER_STATUS } = require('../utils/constants');
 const ApiError = require('../utils/apiError');
@@ -80,7 +80,42 @@ async function authenticate(req, _res, next) {
   }
 }
 
+/**
+ * Optional Authentication Middleware
+ * If Authorization header or cookie is present, populates req.user.
+ * If not present, proceeds cleanly without error.
+ */
+async function optionalAuth(req, _res, next) {
+  try {
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.cookies && req.cookies.accessToken) {
+      token = req.cookies.accessToken;
+    }
+
+    if (!token) return next();
+
+    try {
+      const decoded = verifyAccessToken(token);
+      const user = await User.findById(decoded.userId);
+      if (user && user.isActive && user.status !== USER_STATUS.SUSPENDED && user.status !== USER_STATUS.DEACTIVATED) {
+        req.user = user;
+        req.auth = decoded;
+      }
+    } catch (_) {
+      // Ignore token errors for optional auth
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   authenticate,
   authMiddleware: authenticate,
+  optionalAuth,
 };

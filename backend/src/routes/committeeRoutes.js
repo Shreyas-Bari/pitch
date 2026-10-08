@@ -1,5 +1,6 @@
 const express = require('express');
 const committeeController = require('../controllers/committeeController');
+const eventController = require('../controllers/eventController');
 const { authMiddleware } = require('../middleware/authMiddleware');
 const { requireCommitteeOwnership } = require('../middleware/ownershipMiddleware');
 const { requireCommittee } = require('../middleware/roleMiddleware');
@@ -23,6 +24,7 @@ router.get('/', committeeController.listCommittees);
 
 // 2. Private owner profile operations (must be authenticated as COMMITTEE)
 router.get('/me', authMiddleware, requireCommittee, committeeController.getMyCommittee);
+router.get('/me/events', authMiddleware, requireCommittee, eventController.getMyCommitteeEvents);
 
 router.patch(
   '/me',
