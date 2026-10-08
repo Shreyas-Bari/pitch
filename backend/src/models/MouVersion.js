@@ -193,30 +193,31 @@ mouVersionSchema.post('save', function () {
  */
 mouVersionSchema.pre('save', function (next) {
   if (!this.isNew) {
-    const isSigned =
-      this.status === MOU_VERSION_STATUS.PARTIALLY_SIGNED ||
-      this.status === MOU_VERSION_STATUS.EXECUTED ||
-      this._originalStatus === MOU_VERSION_STATUS.PARTIALLY_SIGNED ||
-      this._originalStatus === MOU_VERSION_STATUS.EXECUTED;
+    // 1. Once fully executed, absolutely no modifications are permitted
+    if (this._originalStatus === MOU_VERSION_STATUS.EXECUTED) {
+      const err = new Error(
+        `Executed MoU Version ${this.versionNumber} is sealed and completely immutable.`
+      );
+      err.name = 'ValidationError';
+      return next(err);
+    }
 
-    if (isSigned) {
-      const immutableFields = [
-        'mouId',
-        'versionNumber',
-        'sourceAgreementId',
-        'documentHash',
-        'hashAlgorithm',
-        'agreementSnapshot',
-        'templateIdentifier',
-      ];
-      for (const field of immutableFields) {
-        if (this.isModified(field)) {
-          const err = new Error(
-            `Signed MoU Version ${this.versionNumber} is immutable. Field "${field}" cannot be modified.`
-          );
-          err.name = 'ValidationError';
-          return next(err);
-        }
+    // 2. Core version identifiers and document hash can NEVER be mutated once generated
+    const immutableFields = [
+      'mouId',
+      'versionNumber',
+      'sourceAgreementId',
+      'documentHash',
+      'hashAlgorithm',
+      'templateIdentifier',
+    ];
+    for (const field of immutableFields) {
+      if (this.isModified(field)) {
+        const err = new Error(
+          `Signed MoU Version ${this.versionNumber} is immutable. Field "${field}" cannot be modified.`
+        );
+        err.name = 'ValidationError';
+        return next(err);
       }
     }
   }
@@ -228,29 +229,40 @@ mouVersionSchema.pre('save', function (next) {
  */
 mouVersionSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], async function (next) {
   const doc = await this.model.findOne(this.getQuery());
-  if (
-    doc &&
-    (doc.status === MOU_VERSION_STATUS.PARTIALLY_SIGNED ||
-      doc.status === MOU_VERSION_STATUS.EXECUTED)
-  ) {
-    const update = this.getUpdate();
-    const modifiedKeys = Object.keys(update?.$set || update || {});
-    const forbidden = [
-      'mouId',
-      'versionNumber',
-      'sourceAgreementId',
-      'documentHash',
-      'hashAlgorithm',
-      'agreementSnapshot',
-      'templateIdentifier',
-    ];
-    for (const f of forbidden) {
-      if (modifiedKeys.some((k) => k === f || k.startsWith(f + '.'))) {
-        const err = new Error(
-          `Signed MoU Version ${doc.versionNumber} is immutable. Field "${f}" cannot be modified.`
-        );
-        err.name = 'ValidationError';
-        return next(err);
+  if (doc) {
+    if (doc.status === MOU_VERSION_STATUS.EXECUTED) {
+      const err = new Error(
+        `Executed MoU Version ${doc.versionNumber} is sealed and completely immutable.`
+      );
+      err.name = 'ValidationError';
+      return next(err);
+    }
+    if (doc.status === MOU_VERSION_STATUS.PARTIALLY_SIGNED) {
+      const update = this.getUpdate();
+      const modifiedKeys = Object.keys(update?.$set || update || {});
+      const forbidden = [
+        'mouId',
+        'versionNumber',
+        'sourceAgreementId',
+        'documentHash',
+        'hashAlgorithm',
+        'agreementSnapshot',
+        'templateIdentifier',
+      ];
+      for (const f of forbidden) {
+        if (
+          modifiedKeys.some(
+            (k) =>
+              (k === f || k.startsWith(f + '.')) &&
+              !k.startsWith('agreementSnapshot.signatories')
+          )
+        ) {
+          const err = new Error(
+            `Signed MoU Version ${doc.versionNumber} is immutable. Field "${f}" cannot be modified.`
+          );
+          err.name = 'ValidationError';
+          return next(err);
+        }
       }
     }
   }
