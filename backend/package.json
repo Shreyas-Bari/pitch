@@ -12,8 +12,9 @@
     "test:auth": "node testAuth.js",
     "test:authz": "node testAuthz.js",
     "test:phase6": "node testPhase6.js",
+    "test:marketplace": "node testMarketplace.js",
     "test:phases16-22": "node testPhases16to22.js",
-    "test": "node testModels.js && node testPhase3.js && node testAuth.js && node testAuthz.js && node testPhase6.js && node testPhases16to22.js"
+    "test": "node testModels.js && node testPhase3.js && node testAuth.js && node testAuthz.js && node testPhase6.js && node testMarketplace.js && node testPhases16to22.js"
   },
   "keywords": [
     "pitch",
