@@ -76,7 +76,11 @@ export function EventDetails() {
         // Fetch packages for this event
         try {
           const pkgRes = await packageService.getPackagesByEvent(id);
-          const pkgList = Array.isArray(pkgRes?.data) ? pkgRes.data : [];
+          const pkgList = Array.isArray(pkgRes?.data?.packages)
+            ? pkgRes.data.packages
+            : (Array.isArray(pkgRes?.data)
+              ? pkgRes.data
+              : (Array.isArray(pkgRes?.packages) ? pkgRes.packages : []));
           if (isMounted) setPackages(pkgList);
         } catch (pkgErr) {
           // If packages fail or none exist, keep packages empty

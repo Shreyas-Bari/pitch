@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import ConversationItem from './ConversationItem';
 import Skeleton from '../ui/Skeleton';
 import EmptyState from '../ui/EmptyState';
+import ErrorState from '../ui/ErrorState';
 import Button from '../ui/Button';
 
 export function ConversationList({
@@ -11,6 +12,8 @@ export function ConversationList({
   activeConversationId,
   onSelectConversation,
   isLoading = false,
+  error = null,
+  onRetry = null,
   currentUserId,
   userRole,
 }) {
@@ -137,7 +140,16 @@ export function ConversationList({
 
       {/* List Container */}
       <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
-        {isLoading ? (
+        {error ? (
+          <div className="p-6">
+            <ErrorState
+              type="api"
+              title="Unable to load conversations"
+              message={error}
+              onRetry={onRetry}
+            />
+          </div>
+        ) : isLoading ? (
           <div className="p-4 space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center gap-3">

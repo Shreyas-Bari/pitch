@@ -68,6 +68,8 @@ async function createProposal({ dealId, userId, role, data = {} }) {
     deal.status = targetDealStatus;
   } else if (deal.status === DEAL_STATUS.INTERESTED && Deal.isValidTransition(deal.status, DEAL_STATUS.DISCUSSION)) {
     deal.status = DEAL_STATUS.DISCUSSION;
+  } else if (deal.status === DEAL_STATUS.DISCUSSION && Deal.isValidTransition(deal.status, DEAL_STATUS.NEGOTIATING)) {
+    deal.status = DEAL_STATUS.NEGOTIATING;
   }
 
   await deal.save();

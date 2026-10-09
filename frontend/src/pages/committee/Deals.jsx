@@ -58,8 +58,11 @@ export function CommitteeDeals() {
           DEAL_STATUS.MOU_DRAFT,
           DEAL_STATUS.AWAITING_SIGNATURES,
           DEAL_STATUS.PARTIALLY_SIGNED,
+          DEAL_STATUS.EXECUTED,
         ];
-        if (!mouStatuses.includes(d.status)) return false;
+        const hasMou = Boolean(d.mouId);
+        const isCompletedWithMou = d.status === DEAL_STATUS.COMPLETED && (hasMou || d.executedAt);
+        if (!mouStatuses.includes(d.status) && !hasMou && !isCompletedWithMou) return false;
       } else if (activeTab === 'FULFILLMENT') {
         const fStatuses = [DEAL_STATUS.EXECUTED, DEAL_STATUS.FULFILLMENT];
         if (!fStatuses.includes(d.status)) return false;

@@ -10,7 +10,7 @@ import { ROLES, APP_NAME } from '../../utils/constants';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import Card, { CardContent, CardFooter } from '../../components/ui/Card';
-import { Lock, Mail, User, Building2, GraduationCap, ArrowRight } from 'lucide-react';
+import { Lock, Mail, User, Building2, GraduationCap, ArrowRight, School } from 'lucide-react';
 
 const registerSchema = z
   .object({
@@ -21,10 +21,23 @@ const registerSchema = z
     confirmPassword: z.string().min(8, 'Please confirm your password'),
     // Optional organization name
     organizationName: z.string().optional(),
+    collegeName: z.string().optional(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+  .superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Passwords do not match',
+        path: ['confirmPassword'],
+      });
+    }
+    if (data.role === ROLES.COMMITTEE && (!data.collegeName || !data.collegeName.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'College name is required for committee registration',
+        path: ['collegeName'],
+      });
+    }
   });
 
 export function Register() {
@@ -49,6 +62,7 @@ export function Register() {
       password: '',
       confirmPassword: '',
       organizationName: '',
+      collegeName: '',
     },
   });
 
@@ -68,8 +82,13 @@ export function Register() {
 
       if (values.role === ROLES.COMPANY && values.organizationName) {
         payload.companyName = values.organizationName;
-      } else if (values.role === ROLES.COMMITTEE && values.organizationName) {
-        payload.committeeName = values.organizationName;
+      } else if (values.role === ROLES.COMMITTEE) {
+        if (values.organizationName) {
+          payload.committeeName = values.organizationName;
+        }
+        if (values.collegeName) {
+          payload.collegeName = values.collegeName;
+        }
       }
 
       const res = await registerAuth(payload);
@@ -172,6 +191,18 @@ export function Register() {
                 error={errors.organizationName?.message}
                 {...register('organizationName')}
               />
+
+              {selectedRole === ROLES.COMMITTEE && (
+                <Input
+                  label="College Name"
+                  type="text"
+                  placeholder="e.g. IIT Bombay / BITS Pilani"
+                  required
+                  leftIcon={<School className="w-4 h-4" />}
+                  error={errors.collegeName?.message}
+                  {...register('collegeName')}
+                />
+              )}
 
               <Input
                 label="Email Address"

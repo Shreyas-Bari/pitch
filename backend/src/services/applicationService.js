@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const { Application, Event, Company, Committee, SponsorshipPackage } = require('../models');
+const { Application, Event, Company, Committee, SponsorshipPackage, Deal } = require('../models');
 const ApiError = require('../utils/apiError');
-const { APPLICATION_STATUS, EVENT_STATUS, ROLES, NOTIFICATION_TYPE } = require('../utils/constants');
+const { APPLICATION_STATUS, EVENT_STATUS, ROLES, NOTIFICATION_TYPE, DEAL_STATUS } = require('../utils/constants');
 const notificationService = require('./notificationService');
 const conversationService = require('./conversationService');
 
@@ -268,6 +268,48 @@ async function acceptApplication(applicationId, committeeUserId, userRole) {
     eventId: application.eventId._id,
   });
 
+  // Ensure an active Deal exists and is linked for this accepted application
+  let deal = await Deal.findOne({
+    eventId: application.eventId._id,
+    companyId: application.companyId._id,
+    committeeId: application.eventId.committeeId,
+    status: {
+      $nin: [
+        DEAL_STATUS.DECLINED,
+        DEAL_STATUS.CANCELLED,
+        DEAL_STATUS.EXPIRED,
+      ],
+    },
+  });
+
+  if (!deal) {
+    deal = await Deal.create({
+      eventId: application.eventId._id,
+      companyId: application.companyId._id,
+      committeeId: application.eventId.committeeId,
+      applicationId: application._id,
+      conversationId: conversation._id,
+      status: DEAL_STATUS.INTERESTED,
+      contributions: application.proposedContribution || null,
+    });
+  } else {
+    let modified = false;
+    if (!deal.applicationId) {
+      deal.applicationId = application._id;
+      modified = true;
+    }
+    if (!deal.conversationId) {
+      deal.conversationId = conversation._id;
+      modified = true;
+    }
+    if (modified) await deal.save();
+  }
+
+  if (!conversation.dealId) {
+    conversation.dealId = deal._id;
+    await conversation.save();
+  }
+
   // Notify company user
   if (application.companyId && application.companyId.userId) {
     await notificationService.createNotification({
@@ -280,7 +322,7 @@ async function acceptApplication(applicationId, committeeUserId, userRole) {
     });
   }
 
-  return { application, conversation };
+  return { application, conversation, deal };
 }
 
 async function rejectApplication(applicationId, committeeUserId, userRole) {

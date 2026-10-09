@@ -14,6 +14,8 @@ export function EventHero({
   saving = false,
   userRole = null,
   isOrganizer = false,
+  hasApplied = false,
+  applicationStatus = null,
 }) {
   if (!event) return null;
 
@@ -144,6 +146,32 @@ export function EventHero({
             {isOrganizer ? (
               <div className="px-4 py-2 rounded-xl bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-semibold">
                 Organized by your committee
+              </div>
+            ) : hasApplied || applicationStatus ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                    applicationStatus === 'ACCEPTED'
+                      ? 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300'
+                      : 'bg-amber-500/20 border-amber-400/30 text-amber-300'
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>
+                    {applicationStatus === 'ACCEPTED'
+                      ? 'Application Accepted'
+                      : 'Application Pending'}
+                  </span>
+                </span>
+                <Link to="/company/applications">
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    className="text-xs bg-white/10 hover:bg-white/20 text-white border-white/20"
+                  >
+                    View in Pipeline
+                  </Button>
+                </Link>
               </div>
             ) : (
               <Button

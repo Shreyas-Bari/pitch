@@ -33,8 +33,7 @@ import Dialog, { DialogFooter } from '../../components/ui/Dialog';
 import PageLoading from '../../components/ui/PageLoading';
 import ErrorState from '../../components/ui/ErrorState';
 import ConfirmationDialog from '../../components/ui/ConfirmationDialog';
-
-const CONTRIBUTION_TYPES = ['CASH', 'IN_KIND', 'GOODIES', 'MENTORSHIP'];
+import { CONTRIBUTION_TYPES } from '../../utils/constants';
 
 export function CommitteeEventDetails() {
   const { id } = useParams();
@@ -89,7 +88,9 @@ export function CommitteeEventDetails() {
       }
 
       if (pkgRes.status === 'fulfilled') {
-        const pList = Array.isArray(pkgRes.value?.data) ? pkgRes.value.data : [];
+        const pList = Array.isArray(pkgRes.value?.data?.packages)
+          ? pkgRes.value.data.packages
+          : (Array.isArray(pkgRes.value?.data) ? pkgRes.value.data : (Array.isArray(pkgRes.value?.packages) ? pkgRes.value.packages : []));
         setPackages(pList);
       }
 
@@ -166,7 +167,10 @@ export function CommitteeEventDetails() {
       });
 
       const res = await packageService.getPackagesByEvent(id);
-      setPackages(Array.isArray(res?.data) ? res.data : []);
+      const list = Array.isArray(res?.data?.packages)
+        ? res.data.packages
+        : (Array.isArray(res?.data) ? res.data : []);
+      setPackages(list);
     } catch (err) {
       toast.error(err?.response?.data?.error?.message || err.message || 'Failed to create package');
     } finally {
@@ -182,7 +186,10 @@ export function CommitteeEventDetails() {
       toast.success('Package tier deleted successfully');
       setDeletePackageId(null);
       const res = await packageService.getPackagesByEvent(id);
-      setPackages(Array.isArray(res?.data) ? res.data : []);
+      const list = Array.isArray(res?.data?.packages)
+        ? res.data.packages
+        : (Array.isArray(res?.data) ? res.data : []);
+      setPackages(list);
     } catch (err) {
       toast.error(err?.response?.data?.error?.message || err.message || 'Failed to delete package');
     } finally {
@@ -458,7 +465,7 @@ export function CommitteeEventDetails() {
                       )}
                     </div>
 
-                    {isPending && (
+                    {isPending ? (
                       <div className="flex items-center gap-2 shrink-0">
                         <Button
                           variant="primary"
@@ -477,7 +484,20 @@ export function CommitteeEventDetails() {
                           Reject
                         </Button>
                       </div>
-                    )}
+                    ) : app.status === 'ACCEPTED' ? (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Link to="/messages">
+                          <Button variant="outline" size="sm" className="text-xs">
+                            Chat & Negotiate
+                          </Button>
+                        </Link>
+                        <Link to="/committee/deals">
+                          <Button variant="primary" size="sm" className="text-xs">
+                            View Deal
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : null}
                   </Card>
                 );
               })}

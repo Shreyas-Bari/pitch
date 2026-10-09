@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ExternalLink, Calendar, Share2, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Calendar, Share2, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Avatar from '../ui/Avatar';
 import Button from '../ui/Button';
@@ -11,14 +11,38 @@ export function ConversationHeader({
   typingUserName = null,
   onBack,
   onOpenContactModal,
+  onStartDeal,
 }) {
-  if (!conversation) return null;
+  if (!conversation) {
+    return (
+      <div className="px-4 py-3 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors"
+              aria-label="Back to conversations list"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <div className="w-9 h-9 rounded-full bg-slate-100 animate-pulse shrink-0" />
+          <div className="space-y-1.5 min-w-0">
+            <div className="w-28 h-4 bg-slate-200 rounded animate-pulse" />
+            <div className="w-20 h-3 bg-slate-100 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const isCompanyUser = userRole === 'COMPANY';
   const partner = isCompanyUser
     ? conversation.participantCommitteeId
     : conversation.participantCompanyId;
 
+  const partnerId = partner?._id || (typeof partner === 'string' ? partner : null);
   const partnerName = partner?.name || (isCompanyUser ? 'College Committee' : 'Brand Sponsor');
   const collegeName = typeof partner?.college === 'object' ? partner?.college?.name : partner?.college;
   const partnerSub = isCompanyUser
@@ -29,10 +53,12 @@ export function ConversationHeader({
   const partnerRole = isCompanyUser ? 'COMMITTEE' : 'COMPANY';
 
   const partnerProfileLink = isCompanyUser
-    ? partner?._id ? `/committees/${partner._id}` : null
-    : partner?._id ? `/companies/${partner._id}` : null;
+    ? partnerId ? `/committees/${partnerId}` : null
+    : partnerId ? `/companies/${partnerId}` : null;
 
-  const event = conversation.eventId;
+  const event = typeof conversation.eventId === 'object' ? conversation.eventId : null;
+  const eventId = conversation.eventId?._id || conversation.eventId?.id || (typeof conversation.eventId === 'string' ? conversation.eventId : null);
+  const dealId = conversation?.dealId?._id || conversation?.dealId?.id || (typeof conversation?.dealId === 'string' ? conversation?.dealId : null);
 
   return (
     <div className="px-4 py-3 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
@@ -124,6 +150,30 @@ export function ConversationHeader({
           />
           <span>{isSocketConnected ? 'Live' : 'Connecting'}</span>
         </div>
+
+        {/* Deal Workspace Link / Action */}
+        {dealId ? (
+          <Link to={`/deals/${dealId}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs hidden xs:inline-flex bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-semibold"
+              leftIcon={<Briefcase className="w-3.5 h-3.5 text-primary-600" />}
+            >
+              Deal Workspace
+            </Button>
+          </Link>
+        ) : eventId && onStartDeal ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onStartDeal}
+            className="text-xs hidden xs:inline-flex bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300 font-semibold"
+            leftIcon={<Briefcase className="w-3.5 h-3.5 text-primary-600" />}
+          >
+            Start Deal
+          </Button>
+        ) : null}
 
         {/* Share Contact Action */}
         {onOpenContactModal && (

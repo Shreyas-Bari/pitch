@@ -190,9 +190,26 @@ export function CompanyApplications() {
                             Withdraw
                           </Button>
                         ) : app.status === 'ACCEPTED' ? (
-                          <span className="text-xs text-emerald-700 font-semibold">
-                            Proceeds to Deal
-                          </span>
+                          <div className="flex items-center justify-end gap-2">
+                            <Link to="/messages">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-primary-700 hover:bg-primary-50 text-xs font-semibold"
+                              >
+                                Chat
+                              </Button>
+                            </Link>
+                            <Link to="/company/deals">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs font-semibold text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                              >
+                                View Deal
+                              </Button>
+                            </Link>
+                          </div>
                         ) : (
                           <span className="text-xs text-slate-400">—</span>
                         )}

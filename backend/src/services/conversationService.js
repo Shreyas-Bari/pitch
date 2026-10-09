@@ -43,6 +43,26 @@ async function getOrCreateConversation({ companyId, committeeId, eventId = null,
     }
   }
 
+  // If conversation has no deal linked yet but has eventId, resolve active deal if one exists
+  if (!conversation.dealId && conversation.eventId) {
+    const activeDeal = await Deal.findOne({
+      eventId: conversation.eventId,
+      companyId,
+      committeeId,
+      status: {
+        $nin: ['DECLINED', 'CANCELLED', 'EXPIRED'],
+      },
+    });
+    if (activeDeal) {
+      conversation.dealId = activeDeal._id;
+      await conversation.save();
+      if (!activeDeal.conversationId) {
+        activeDeal.conversationId = conversation._id;
+        await activeDeal.save();
+      }
+    }
+  }
+
   return conversation;
 }
 
@@ -75,6 +95,7 @@ async function listConversations(userId, userRole, query = {}) {
       .populate('participantCompanyId', 'name industry logoFileId location isProfileComplete')
       .populate('participantCommitteeId', 'name college logoFileId verificationStatus')
       .populate('eventId', 'title eventDate status')
+      .populate('dealId', 'status agreedCommercials')
       .populate('lastMessageId')
       .sort({ lastMessageAt: -1, updatedAt: -1 })
       .skip(skip)
