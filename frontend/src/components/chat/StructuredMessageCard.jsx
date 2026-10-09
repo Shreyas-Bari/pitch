@@ -101,7 +101,7 @@ export function StructuredMessageCard({ message, currentUserId }) {
               {pkg.benefits.slice(0, 2).map((b, i) => (
                 <div key={i} className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                  <span className="truncate">{b}</span>
+                  <span className="truncate">{typeof b === 'object' ? (b.title || b.description || 'Benefit') : b}</span>
                 </div>
               ))}
             </div>

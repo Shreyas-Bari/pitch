@@ -20,8 +20,9 @@ export function ConversationHeader({
     : conversation.participantCompanyId;
 
   const partnerName = partner?.name || (isCompanyUser ? 'College Committee' : 'Brand Sponsor');
+  const collegeName = typeof partner?.college === 'object' ? partner?.college?.name : partner?.college;
   const partnerSub = isCompanyUser
-    ? partner?.college || 'Campus Committee'
+    ? collegeName || 'Campus Committee'
     : partner?.industry || 'Brand Sponsor';
   const partnerAvatar =
     partner?.logoFileId?.url || partner?.logo || partner?.logoUrl || null;

@@ -52,7 +52,7 @@ export function FulfillmentTracker({
     try {
       setEvidenceLoading(true);
       const res = await fulfillmentService.getEvidence(f._id);
-      setEvidenceList(res?.data || res || []);
+      setEvidenceList(Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
     } catch {
       setEvidenceList([]);
     } finally {

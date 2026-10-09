@@ -27,7 +27,8 @@ export function CommitteeDeals() {
       setLoading(true);
       setError(null);
       const res = await dealService.getDeals();
-      setDeals(res?.data?.deals || res?.deals || []);
+      const list = Array.isArray(res?.data) ? res.data : (res?.data?.deals || res?.deals || []);
+      setDeals(list);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to load deals.');
     } finally {

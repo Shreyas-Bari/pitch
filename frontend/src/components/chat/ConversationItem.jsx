@@ -19,8 +19,9 @@ export function ConversationItem({
     : conversation.participantCompanyId;
 
   const partnerName = partner?.name || (isCompanyUser ? 'College Committee' : 'Brand Sponsor');
+  const collegeName = typeof partner?.college === 'object' ? partner?.college?.name : partner?.college;
   const partnerSub = isCompanyUser
-    ? partner?.college || 'Campus Fest Committee'
+    ? collegeName || 'Campus Fest Committee'
     : partner?.industry || 'Brand Partner';
   const partnerAvatar =
     partner?.logoFileId?.url || partner?.logo || partner?.logoUrl || null;
