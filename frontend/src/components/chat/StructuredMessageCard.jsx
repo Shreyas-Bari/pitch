@@ -101,7 +101,7 @@ export function StructuredMessageCard({ message, currentUserId }) {
               {pkg.benefits.slice(0, 2).map((b, i) => (
                 <div key={i} className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                  <span className="truncate">{typeof b === 'object' ? (b.title || b.description || 'Benefit') : b}</span>
+                  <span className="truncate">{typeof b === 'object' ? (b?.title || b?.description || 'Benefit') : b}</span>
                 </div>
               ))}
             </div>
@@ -118,7 +118,7 @@ export function StructuredMessageCard({ message, currentUserId }) {
 
   // 3. CONTACT CARD
   if (type === 'CONTACT' || message.contactShareId) {
-    const contact = metadata?.contact || message.contactShareId?.contact || {};
+    const contact = metadata?.contact || (typeof message.contactShareId === 'object' ? message.contactShareId?.contact : {}) || {};
     return (
       <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50/60 to-white p-4 shadow-sm max-w-sm text-left">
         <div className="flex items-center justify-between gap-2 mb-2.5">
@@ -173,7 +173,7 @@ export function StructuredMessageCard({ message, currentUserId }) {
   // 4. PROPOSAL / COUNTER_PROPOSAL (Stage 5 Deal Item)
   if (type === 'PROPOSAL' || type === 'COUNTER_PROPOSAL' || message.proposalId) {
     const isCounter = type === 'COUNTER_PROPOSAL';
-    const dealId = message.dealId?._id || message.dealId;
+    const dealId = message.dealId?._id || message.dealId?.id || (typeof message.dealId === 'string' ? message.dealId : null);
     return (
       <div className="rounded-2xl border border-purple-200 bg-purple-50/30 p-4 shadow-sm max-w-sm text-left">
         <div className="flex items-center justify-between gap-2 mb-2">
@@ -205,7 +205,7 @@ export function StructuredMessageCard({ message, currentUserId }) {
 
   // 5. MOU CARD (Stage 5 Formal MoU)
   if (type === 'MOU_CARD' || message.mouId) {
-    const mouId = message.mouId?._id || message.mouId;
+    const mouId = message.mouId?._id || message.mouId?.id || (typeof message.mouId === 'string' ? message.mouId : null);
     return (
       <div className="rounded-2xl border border-indigo-200 bg-indigo-50/30 p-4 shadow-sm max-w-sm text-left">
         <div className="flex items-center justify-between gap-2 mb-2">
@@ -234,8 +234,8 @@ export function StructuredMessageCard({ message, currentUserId }) {
   }
 
   // 6. IMAGE MESSAGE
-  if (type === 'IMAGE' || (message.fileId && message.fileId.mimeType?.startsWith('image/'))) {
-    const file = message.fileId || {};
+  if (type === 'IMAGE' || (typeof message.fileId === 'object' && message.fileId?.mimeType?.startsWith('image/'))) {
+    const file = typeof message.fileId === 'object' && message.fileId ? message.fileId : {};
     const imgUrl = file.url || metadata?.imageUrl;
     if (imgUrl) {
       return (
@@ -258,8 +258,8 @@ export function StructuredMessageCard({ message, currentUserId }) {
   }
 
   // 7. DOCUMENT MESSAGE
-  if (type === 'DOCUMENT' || message.fileId) {
-    const file = message.fileId || {};
+  if (type === 'DOCUMENT' || (typeof message.fileId === 'object' && message.fileId)) {
+    const file = typeof message.fileId === 'object' && message.fileId ? message.fileId : {};
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm max-w-sm text-left">
         <div className="flex items-center gap-3">

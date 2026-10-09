@@ -28,7 +28,13 @@ export function CompanyDeals() {
       setLoading(true);
       setError(null);
       const res = await dealService.getDeals();
-      const list = Array.isArray(res?.data) ? res.data : (res?.data?.deals || res?.deals || []);
+      const list = Array.isArray(res)
+        ? res
+        : (Array.isArray(res?.data)
+          ? res.data
+          : (Array.isArray(res?.data?.deals)
+            ? res.data.deals
+            : (Array.isArray(res?.deals) ? res.deals : [])));
       setDeals(list);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to load deals.');
@@ -59,21 +65,29 @@ export function CompanyDeals() {
           DEAL_STATUS.MOU_DRAFT,
           DEAL_STATUS.AWAITING_SIGNATURES,
           DEAL_STATUS.PARTIALLY_SIGNED,
+          DEAL_STATUS.EXECUTED,
         ];
-        if (!mouStatuses.includes(d.status)) return false;
+        const hasMou = Boolean(d.mouId);
+        const isCompletedWithMou = d.status === DEAL_STATUS.COMPLETED && (hasMou || d.executedAt);
+        if (!mouStatuses.includes(d.status) && !hasMou && !isCompletedWithMou) return false;
       } else if (activeTab === 'FULFILLMENT') {
         const fStatuses = [DEAL_STATUS.EXECUTED, DEAL_STATUS.FULFILLMENT];
         if (!fStatuses.includes(d.status)) return false;
       } else if (activeTab === 'COMPLETED') {
-        if (d.status !== DEAL_STATUS.COMPLETED) return false;
+        if (d.status !== DEAL_STATUS.COMPLETED && d.status !== DEAL_STATUS.EXECUTED) return false;
       }
 
       // Search filter
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       const partnerName = d.committeeId?.name?.toLowerCase() || '';
+      const collegeName = (
+        typeof d.committeeId?.college === 'object'
+          ? d.committeeId?.college?.name
+          : d.committeeId?.college
+      )?.toLowerCase() || '';
       const eventTitle = d.eventId?.title?.toLowerCase() || '';
-      return partnerName.includes(q) || eventTitle.includes(q);
+      return partnerName.includes(q) || collegeName.includes(q) || eventTitle.includes(q);
     });
   }, [deals, activeTab, searchQuery]);
 

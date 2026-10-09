@@ -59,25 +59,35 @@ async function verifyDealParticipant(dealId, userId, role) {
 
   if (role === ROLES.COMPANY) {
     company = await Company.findOne({ userId });
-    if (
-      company &&
-      deal.companyId &&
-      (deal.companyId.equals
-        ? deal.companyId.equals(company._id)
-        : deal.companyId.toString() === company._id.toString())
-    ) {
+    const isCompanyMatch =
+      (company &&
+        deal.companyId &&
+        (deal.companyId.equals
+          ? deal.companyId.equals(company._id)
+          : deal.companyId.toString() === company._id.toString())) ||
+      (deal.companyId &&
+        (deal.companyId.equals
+          ? deal.companyId.equals(userId)
+          : deal.companyId.toString() === userId.toString()));
+
+    if (isCompanyMatch) {
       userRole = ROLES.COMPANY;
       return { deal, userRole, company, committee: null };
     }
   } else if (role === ROLES.COMMITTEE) {
     committee = await Committee.findOne({ userId });
-    if (
-      committee &&
-      deal.committeeId &&
-      (deal.committeeId.equals
-        ? deal.committeeId.equals(committee._id)
-        : deal.committeeId.toString() === committee._id.toString())
-    ) {
+    const isCommitteeMatch =
+      (committee &&
+        deal.committeeId &&
+        (deal.committeeId.equals
+          ? deal.committeeId.equals(committee._id)
+          : deal.committeeId.toString() === committee._id.toString())) ||
+      (deal.committeeId &&
+        (deal.committeeId.equals
+          ? deal.committeeId.equals(userId)
+          : deal.committeeId.toString() === userId.toString()));
+
+    if (isCommitteeMatch) {
       userRole = ROLES.COMMITTEE;
       return { deal, userRole, company: null, committee };
     }
@@ -178,16 +188,18 @@ async function getDeals({ userId, role, query = {} }) {
 
   if (role === ROLES.COMPANY) {
     const company = await Company.findOne({ userId });
-    if (!company) {
-      return { deals: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } };
+    if (company) {
+      filter.$or = [{ companyId: company._id }, { companyId: userId }];
+    } else {
+      filter.companyId = userId;
     }
-    filter.companyId = company._id;
   } else if (role === ROLES.COMMITTEE) {
     const committee = await Committee.findOne({ userId });
-    if (!committee) {
-      return { deals: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } };
+    if (committee) {
+      filter.$or = [{ committeeId: committee._id }, { committeeId: userId }];
+    } else {
+      filter.committeeId = userId;
     }
-    filter.committeeId = committee._id;
   } else if (role === ROLES.ADMIN) {
     if (query.companyId) filter.companyId = query.companyId;
     if (query.committeeId) filter.committeeId = query.committeeId;
@@ -210,6 +222,7 @@ async function getDeals({ userId, role, query = {} }) {
       .populate('companyId', 'name legalName industry location')
       .populate('committeeId', 'name college')
       .populate('currentProposalId')
+      .populate('mouId')
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit),

@@ -52,8 +52,19 @@ const LOCATION_MODES = [
   { value: 'ONLINE', label: 'Virtual (Online)' },
   { value: 'HYBRID', label: 'Hybrid' },
 ];
-
-const CONTRIBUTION_TYPES = ['CASH', 'IN_KIND', 'GOODIES', 'MENTORSHIP'];
+const CONTRIBUTION_OPTIONS = [
+  { value: 'CASH', label: 'Cash / Direct Funding' },
+  { value: 'PRODUCT', label: 'Product / In-Kind' },
+  { value: 'GIFT_HAMPER', label: 'Goodies & Hampers' },
+  { value: 'MERCHANDISE', label: 'Merchandise & Swag' },
+  { value: 'FOOD', label: 'Food & Catering' },
+  { value: 'BEVERAGE', label: 'Beverages & Drinks' },
+  { value: 'EQUIPMENT', label: 'Equipment & AV Tech' },
+  { value: 'SERVICE', label: 'Services & Mentorship' },
+  { value: 'VENUE', label: 'Venue & Facilities' },
+  { value: 'TRANSPORTATION', label: 'Logistics & Travel' },
+  { value: 'OTHER', label: 'Other Support' },
+];
 
 const editEventSchema = z.object({
   title: z.string().min(3, 'Event title must be at least 3 characters'),
@@ -117,7 +128,14 @@ export function CommitteeEditEvent() {
           const formattedEDate = eDate ? new Date(eDate).toISOString().split('T')[0] : '';
 
           const sr = eventData.sponsorshipRequirements || {};
-          setSelectedContributions(sr.contributionTypes || ['CASH']);
+          const rawTypes = sr.contributionTypes || ['CASH'];
+          const normalizedTypes = rawTypes.map((t) => {
+            if (t === 'IN_KIND') return 'PRODUCT';
+            if (t === 'GOODIES') return 'GIFT_HAMPER';
+            if (t === 'MENTORSHIP') return 'SERVICE';
+            return t;
+          }).filter((t) => CONTRIBUTION_OPTIONS.some((opt) => opt.value === t));
+          setSelectedContributions(normalizedTypes.length ? normalizedTypes : ['CASH']);
 
           reset({
             title: eventData.title || '',
@@ -402,13 +420,13 @@ export function CommitteeEditEvent() {
               Accepted Contribution Types
             </label>
             <div className="flex flex-wrap gap-2">
-              {CONTRIBUTION_TYPES.map((type) => {
-                const isSelected = selectedContributions.includes(type);
+              {CONTRIBUTION_OPTIONS.map((opt) => {
+                const isSelected = selectedContributions.includes(opt.value);
                 return (
                   <button
-                    key={type}
+                    key={opt.value}
                     type="button"
-                    onClick={() => handleContributionToggle(type)}
+                    onClick={() => handleContributionToggle(opt.value)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-500 shadow-sm'
@@ -416,7 +434,7 @@ export function CommitteeEditEvent() {
                     }`}
                   >
                     {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                    <span>{type}</span>
+                    <span>{opt.label}</span>
                   </button>
                 );
               })}

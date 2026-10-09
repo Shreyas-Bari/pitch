@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { eventService } from '../../services/eventService';
 import { packageService } from '../../services/packageService';
+import { applicationService } from '../../services/applicationService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { formatDate } from '../../utils/formatDate';
@@ -47,6 +48,7 @@ export function CompanyEventDetails() {
   const [saving, setSaving] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
+  const [existingApplication, setExistingApplication] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,11 +72,26 @@ export function CompanyEventDetails() {
 
         try {
           const pkgRes = await packageService.getPackagesByEvent(id);
-          const pkgList = Array.isArray(pkgRes?.data) ? pkgRes.data : [];
+          const pkgList = Array.isArray(pkgRes?.data?.packages)
+            ? pkgRes.data.packages
+            : (Array.isArray(pkgRes?.data)
+              ? pkgRes.data
+              : (Array.isArray(pkgRes?.packages) ? pkgRes.packages : []));
           if (isMounted) setPackages(pkgList);
         } catch {
           if (isMounted) setPackages([]);
         }
+
+        try {
+          const appRes = await applicationService.getApplications();
+          const appList = Array.isArray(appRes?.data) ? appRes.data : appRes?.applications || [];
+          const existing = appList.find(
+            (a) =>
+              (a.eventId?._id === id || a.eventId === id || a.eventId?.id === id) &&
+              ['PENDING', 'ACCEPTED'].includes(a.status)
+          );
+          if (isMounted) setExistingApplication(existing || null);
+        } catch {}
 
         try {
           const savedRes = await eventService.getSavedEvents();
@@ -181,6 +198,8 @@ export function CompanyEventDetails() {
         saving={saving}
         userRole="COMPANY"
         isOrganizer={false}
+        hasApplied={!!existingApplication}
+        applicationStatus={existingApplication?.status}
       />
 
       {/* Main Grid */}
@@ -411,6 +430,7 @@ export function CompanyEventDetails() {
           event={event}
           packages={packages}
           initialPackage={selectedPackage}
+          existingApplication={existingApplication}
           onSuccess={() => {
             setIsApplyModalOpen(false);
             toast.success('Your sponsorship application has been submitted!');

@@ -245,11 +245,15 @@ export function DealWorkspace({ basePath = '/deals' }) {
   // Lifecycle Transitions
   const handleStartNegotiation = async () => {
     try {
-      await dealService.updateDeal(dealId, { status: DEAL_STATUS.NEGOTIATING });
-      toast.success('Deal moved to active NEGOTIATING stage.');
+      const nextStatus =
+        deal.status === DEAL_STATUS.INTERESTED
+          ? DEAL_STATUS.DISCUSSION
+          : DEAL_STATUS.NEGOTIATING;
+      await dealService.updateDeal(dealId, { status: nextStatus });
+      toast.success(`Deal moved to active ${nextStatus} stage.`);
       fetchDealData();
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to transition to negotiation.');
+      toast.error(err.response?.data?.message || err.message || 'Failed to update deal stage.');
     }
   };
 
@@ -431,7 +435,7 @@ export function DealWorkspace({ basePath = '/deals' }) {
 
           {/* Contextual Primary Actions */}
           <div className="flex flex-wrap items-center gap-2 md:self-start">
-            {/* 1. Start Negotiation */}
+            {/* 1. Start Discussion / Negotiation */}
             {[DEAL_STATUS.INTERESTED, DEAL_STATUS.DISCUSSION].includes(deal.status) && (
               <Button
                 variant="primary"
@@ -440,7 +444,7 @@ export function DealWorkspace({ basePath = '/deals' }) {
                 leftIcon={<Sparkles className="w-4 h-4" />}
                 className="text-xs"
               >
-                Start Formal Negotiation
+                {deal.status === DEAL_STATUS.INTERESTED ? 'Move to Discussion' : 'Start Formal Negotiation'}
               </Button>
             )}
 
@@ -485,8 +489,29 @@ export function DealWorkspace({ basePath = '/deals' }) {
               </Link>
             )}
 
-            {/* 5. Complete Deal */}
-            {deal.status === DEAL_STATUS.FULFILLMENT && (
+            {/* 5a. Start Deliverable Fulfillment when EXECUTED */}
+            {deal.status === DEAL_STATUS.EXECUTED && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    await dealService.updateDeal(dealId, { status: DEAL_STATUS.FULFILLMENT });
+                    toast.success('Deal moved to active FULFILLMENT stage.');
+                    fetchDealData();
+                  } catch (err) {
+                    toast.error(err.response?.data?.message || err.message || 'Failed to move to fulfillment.');
+                  }
+                }}
+                leftIcon={<PackageCheck className="w-4 h-4" />}
+                className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                Start Deliverable Fulfillment
+              </Button>
+            )}
+
+            {/* 5b. Complete Deal */}
+            {[DEAL_STATUS.EXECUTED, DEAL_STATUS.FULFILLMENT].includes(deal.status) && (
               <Button
                 variant="primary"
                 size="sm"

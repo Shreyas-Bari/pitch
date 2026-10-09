@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Inbox, Check, X, ExternalLink, Calendar, Building2 } from 'lucide-react';
+import { Inbox, Check, X, ExternalLink, Calendar, Building2, MessageSquare } from 'lucide-react';
 import { applicationService } from '../../services/applicationService';
 import { formatDate } from '../../utils/formatDate';
 import { useToast } from '../../hooks/useToast';
@@ -213,6 +213,28 @@ export function CommitteeApplications() {
                         Decline
                       </Button>
                     </>
+                  ) : app.status === 'ACCEPTED' ? (
+                    <div className="flex items-center gap-2">
+                      <Link to="/messages">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          leftIcon={<MessageSquare className="w-3.5 h-3.5 text-primary-600" />}
+                        >
+                          Chat & Negotiate
+                        </Button>
+                      </Link>
+                      <Link to="/committee/deals">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          View Deals
+                        </Button>
+                      </Link>
+                    </div>
                   ) : (
                     <span className="text-xs text-pitch-muted font-medium">
                       Status: {app.status}

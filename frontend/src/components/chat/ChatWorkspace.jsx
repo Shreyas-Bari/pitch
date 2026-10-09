@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { conversationService } from '../../services/conversationService';
 import { messageService } from '../../services/messageService';
+import { dealService } from '../../services/dealService';
 import { useToast } from '../../hooks/useToast';
 
 import ConversationList from './ConversationList';
@@ -47,6 +48,12 @@ export function ChatWorkspace({ basePath = '/messages' }) {
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  const routeConversationIdRef = useRef(routeConversationId);
+  routeConversationIdRef.current = routeConversationId;
+
+  const activeConversationIdRef = useRef(activeConversationId);
+  activeConversationIdRef.current = activeConversationId;
+
   // 1. Fetch Conversations List
   const fetchConversations = useCallback(async () => {
     try {
@@ -59,7 +66,7 @@ export function ChatWorkspace({ basePath = '/messages' }) {
       setConversations(list);
 
       // Auto-select first conversation on desktop if none selected
-      if (!routeConversationId && list.length > 0 && typeof window !== 'undefined' && window.innerWidth >= 768) {
+      if (!routeConversationIdRef.current && list.length > 0 && typeof window !== 'undefined' && window.innerWidth >= 768) {
         navigate(`${basePath}/${list[0]._id}`, { replace: true });
       }
     } catch (err) {
@@ -67,7 +74,7 @@ export function ChatWorkspace({ basePath = '/messages' }) {
     } finally {
       setConversationsLoading(false);
     }
-  }, [basePath, navigate, routeConversationId]);
+  }, [basePath, navigate]);
 
   useEffect(() => {
     fetchConversations();
@@ -80,20 +87,25 @@ export function ChatWorkspace({ basePath = '/messages' }) {
       return;
     }
 
-    const found = conversations.find((c) => c._id === activeConversationId);
+    const found = conversations.find((c) => String(c._id) === String(activeConversationId));
     if (found) {
       setActiveConversation(found);
     } else {
       // Fetch details individually
+      let isMounted = true;
       conversationService
         .getConversation(activeConversationId)
         .then((res) => {
+          if (!isMounted) return;
           const c = res?.data?.conversation || res?.conversation || res?.data || null;
           setActiveConversation(c);
         })
         .catch(() => {
           // Handled in messagesError
         });
+      return () => {
+        isMounted = false;
+      };
     }
   }, [activeConversationId, conversations]);
 
@@ -104,6 +116,10 @@ export function ChatWorkspace({ basePath = '/messages' }) {
       setMessagesLoading(true);
       setMessagesError(null);
       const res = await messageService.getMessages(convId, { limit: 100 });
+
+      // Discard response if conversation was switched in-flight
+      if (activeConversationIdRef.current !== convId) return;
+
       const msgs = Array.isArray(res?.data)
         ? res.data
         : (res?.data?.messages || res?.messages || (Array.isArray(res) ? res : []));
@@ -118,7 +134,7 @@ export function ChatWorkspace({ basePath = '/messages' }) {
         // Update local conversation list read state
         setConversations((prev) =>
           prev.map((c) => {
-            if (c._id === convId && c.lastMessageId) {
+            if (String(c._id) === String(convId) && c.lastMessageId) {
               const currentRead = c.lastMessageId.readBy || [];
               if (!currentRead.some((r) => String(r.userId?._id || r.userId) === String(currentUserId))) {
                 return {
@@ -137,6 +153,7 @@ export function ChatWorkspace({ basePath = '/messages' }) {
         // Non-blocking
       }
     } catch (err) {
+      if (activeConversationIdRef.current !== convId) return;
       const status = err.response?.status;
       if (status === 403) {
         setMessagesError('UNAUTHORIZED');
@@ -146,12 +163,15 @@ export function ChatWorkspace({ basePath = '/messages' }) {
         setMessagesError(err.response?.data?.message || err.message || 'Failed to load messages.');
       }
     } finally {
-      setMessagesLoading(false);
+      if (activeConversationIdRef.current === convId) {
+        setMessagesLoading(false);
+      }
     }
   }, [socket, isConnected, currentUserId]);
 
   useEffect(() => {
     if (activeConversationId) {
+      setMessages([]);
       fetchMessages(activeConversationId);
     } else {
       setMessages([]);
@@ -365,6 +385,29 @@ export function ChatWorkspace({ basePath = '/messages' }) {
     navigate(basePath);
   };
 
+  const handleStartDeal = async () => {
+    if (!activeConversation?.eventId) return;
+    try {
+      const eventId = activeConversation.eventId._id || activeConversation.eventId;
+      const partner = userRole === 'COMPANY'
+        ? activeConversation.participantCommitteeId
+        : activeConversation.participantCompanyId;
+      const partnerId = partner?._id || partner;
+      const res = await dealService.createDeal({
+        eventId,
+        companyId: userRole === 'COMPANY' ? undefined : partnerId,
+        committeeId: userRole === 'COMMITTEE' ? undefined : partnerId,
+      });
+      const createdDeal = res?.data || res;
+      const dId = createdDeal?._id || createdDeal?.id;
+      if (dId) {
+        navigate(`/deals/${dId}`);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to start deal workspace.');
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-[calc(100vh-8.5rem)] min-h-[550px] flex">
       {/* Left Column: Conversation List */}
@@ -378,6 +421,8 @@ export function ChatWorkspace({ basePath = '/messages' }) {
           activeConversationId={activeConversationId}
           onSelectConversation={handleSelectConversation}
           isLoading={conversationsLoading}
+          error={conversationsError}
+          onRetry={fetchConversations}
           currentUserId={currentUserId}
           userRole={userRole}
           basePath={basePath}
@@ -400,6 +445,7 @@ export function ChatWorkspace({ basePath = '/messages' }) {
               typingUserName={typingUserName}
               onBack={handleBackToList}
               onOpenContactModal={() => setIsContactModalOpen(true)}
+              onStartDeal={handleStartDeal}
             />
 
             {/* Messages Scroll Area */}
@@ -412,14 +458,14 @@ export function ChatWorkspace({ basePath = '/messages' }) {
                 <div className="space-y-4 py-8 max-w-lg mx-auto">
                   <div className="flex items-start gap-2.5">
                     <Skeleton variant="circular" width={32} height={32} />
-                    <Skeleton variant="rounded" width="55%" height={48} />
+                    <Skeleton variant="rectangular" width="55%" height={48} />
                   </div>
                   <div className="flex items-start justify-end gap-2.5">
-                    <Skeleton variant="rounded" width="45%" height={40} />
+                    <Skeleton variant="rectangular" width="45%" height={40} />
                   </div>
                   <div className="flex items-start gap-2.5">
                     <Skeleton variant="circular" width={32} height={32} />
-                    <Skeleton variant="rounded" width="65%" height={56} />
+                    <Skeleton variant="rectangular" width="65%" height={56} />
                   </div>
                 </div>
               ) : messagesError ? (

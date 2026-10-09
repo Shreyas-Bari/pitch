@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const { Invitation, Event, Company, Committee, SponsorshipPackage } = require('../models');
+const { Invitation, Event, Company, Committee, SponsorshipPackage, Deal } = require('../models');
 const ApiError = require('../utils/apiError');
-const { INVITATION_STATUS, ROLES, NOTIFICATION_TYPE } = require('../utils/constants');
+const { INVITATION_STATUS, ROLES, NOTIFICATION_TYPE, DEAL_STATUS } = require('../utils/constants');
 const notificationService = require('./notificationService');
 const conversationService = require('./conversationService');
 
@@ -196,6 +196,47 @@ async function acceptInvitation(invitationId, companyUserId) {
     eventId: invitation.eventId._id,
   });
 
+  // Ensure an active Deal exists and is linked for this accepted invitation
+  let deal = await Deal.findOne({
+    eventId: invitation.eventId._id,
+    companyId: invitation.companyId,
+    committeeId: invitation.committeeId._id,
+    status: {
+      $nin: [
+        DEAL_STATUS.DECLINED,
+        DEAL_STATUS.CANCELLED,
+        DEAL_STATUS.EXPIRED,
+      ],
+    },
+  });
+
+  if (!deal) {
+    deal = await Deal.create({
+      eventId: invitation.eventId._id,
+      companyId: invitation.companyId,
+      committeeId: invitation.committeeId._id,
+      invitationId: invitation._id,
+      conversationId: conversation._id,
+      status: DEAL_STATUS.INTERESTED,
+    });
+  } else {
+    let modified = false;
+    if (!deal.invitationId) {
+      deal.invitationId = invitation._id;
+      modified = true;
+    }
+    if (!deal.conversationId) {
+      deal.conversationId = conversation._id;
+      modified = true;
+    }
+    if (modified) await deal.save();
+  }
+
+  if (!conversation.dealId) {
+    conversation.dealId = deal._id;
+    await conversation.save();
+  }
+
   // Notify committee
   if (invitation.committeeId && invitation.committeeId.userId) {
     await notificationService.createNotification({
@@ -208,7 +249,7 @@ async function acceptInvitation(invitationId, companyUserId) {
     });
   }
 
-  return { invitation, conversation };
+  return { invitation, conversation, deal };
 }
 
 async function declineInvitation(invitationId, companyUserId) {
