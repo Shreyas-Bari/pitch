@@ -54,7 +54,8 @@ export function ConversationList({
         : c.participantCompanyId;
 
       const partnerName = partner?.name?.toLowerCase() || '';
-      const partnerSub = (isCompany ? partner?.college : partner?.industry)?.toLowerCase() || '';
+      const partnerCollege = typeof partner?.college === 'object' ? partner?.college?.name : partner?.college;
+      const partnerSub = (isCompany ? partnerCollege : partner?.industry)?.toLowerCase() || '';
       const eventTitle = c.eventId?.title?.toLowerCase() || '';
       const lastText = c.lastMessageId?.text?.toLowerCase() || '';
 

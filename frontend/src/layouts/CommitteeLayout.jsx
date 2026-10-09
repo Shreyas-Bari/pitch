@@ -6,6 +6,7 @@ import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Dropdown from '../components/ui/Dropdown';
 import Drawer from '../components/ui/Drawer';
+import NotificationBell from '../components/notifications/NotificationBell';
 import {
   LayoutDashboard,
   Calendar,
@@ -178,13 +179,7 @@ export function CommitteeLayout() {
               <ExternalLink className="w-3.5 h-3.5" />
             </Link>
 
-            <Link
-              to="/notifications"
-              title="Notifications"
-              className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors relative"
-            >
-              <Bell className="w-5 h-5" />
-            </Link>
+            <NotificationBell />
 
             <Dropdown
               trigger={

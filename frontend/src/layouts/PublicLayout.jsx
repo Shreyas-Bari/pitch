@@ -7,6 +7,7 @@ import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import Dropdown from '../components/ui/Dropdown';
 import Drawer from '../components/ui/Drawer';
+import NotificationBell from '../components/notifications/NotificationBell';
 import {
   Menu,
   X,
@@ -92,13 +93,7 @@ export function PublicLayout() {
                   <MessageSquare className="w-5 h-5" />
                 </Link>
 
-                <Link
-                  to="/notifications"
-                  title="Notifications"
-                  className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors relative"
-                >
-                  <Bell className="w-5 h-5" />
-                </Link>
+                <NotificationBell />
 
                 <Link to={getDashboardPath(user?.role)}>
                   <Button

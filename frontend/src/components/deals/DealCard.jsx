@@ -21,7 +21,7 @@ export function DealCard({ deal, userRole, basePath = '/deals' }) {
   const partner = isCompany ? deal.committeeId : deal.companyId;
   const partnerName = partner?.name || (isCompany ? 'Campus Committee' : 'Brand Sponsor');
   const partnerSub = isCompany
-    ? partner?.college || 'College Committee'
+    ? (typeof partner?.college === 'object' ? partner?.college?.name : partner?.college) || 'College Committee'
     : partner?.industry || 'Brand Partner';
   const partnerAvatar = partner?.logo || partner?.logoUrl || null;
   const partnerRole = isCompany ? 'COMMITTEE' : 'COMPANY';

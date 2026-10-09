@@ -87,42 +87,62 @@ export function DealWorkspace({ basePath = '/deals' }) {
 
       // Primary deal record
       const dealRes = await dealService.getDeal(dealId);
-      const d = dealRes?.data?.deal || dealRes?.deal || dealRes;
+      const d = dealRes?.data?.deal || (dealRes?.data?._id ? dealRes.data : null) || dealRes?.deal || dealRes;
       setDeal(d);
 
       // Fetch proposals
       try {
         const propRes = await proposalService.getProposals(dealId);
-        setProposals(propRes?.data?.proposals || propRes?.proposals || propRes || []);
+        const propList = Array.isArray(propRes?.data)
+          ? propRes.data
+          : (Array.isArray(propRes?.data?.proposals)
+            ? propRes.data.proposals
+            : (Array.isArray(propRes) ? propRes : []));
+        setProposals(propList);
       } catch {
         setProposals([]);
       }
 
       // Fetch MoU if exists or deal reached AGREED+
-      if (d.mouId || [DEAL_STATUS.AGREED, DEAL_STATUS.MOU_DRAFT, DEAL_STATUS.AWAITING_SIGNATURES, DEAL_STATUS.PARTIALLY_SIGNED, DEAL_STATUS.EXECUTED, DEAL_STATUS.FULFILLMENT, DEAL_STATUS.COMPLETED].includes(d.status)) {
+      if (d?.mouId || [DEAL_STATUS.AGREED, DEAL_STATUS.MOU_DRAFT, DEAL_STATUS.AWAITING_SIGNATURES, DEAL_STATUS.PARTIALLY_SIGNED, DEAL_STATUS.EXECUTED, DEAL_STATUS.FULFILLMENT, DEAL_STATUS.COMPLETED].includes(d?.status)) {
         try {
           const mouRes = await mouService.getMouByDeal(dealId);
-          setMouData(mouRes?.data?.mou || mouRes?.mou || mouRes);
+          const m = mouRes?.data?.mou || (mouRes?.data?._id ? mouRes.data : null) || mouRes?.mou || mouRes;
+          setMouData(m);
         } catch {
           setMouData(null);
         }
       }
 
       // Fetch fulfillments if EXECUTED or later
-      if ([DEAL_STATUS.EXECUTED, DEAL_STATUS.FULFILLMENT, DEAL_STATUS.COMPLETED, DEAL_STATUS.DISPUTED].includes(d.status)) {
+      if ([DEAL_STATUS.EXECUTED, DEAL_STATUS.FULFILLMENT, DEAL_STATUS.COMPLETED, DEAL_STATUS.DISPUTED].includes(d?.status)) {
         try {
           const fRes = await fulfillmentService.getFulfillmentsByDeal(dealId);
-          setFulfillments(fRes?.data?.fulfillments || fRes?.fulfillments || fRes || []);
+          const fList = Array.isArray(fRes?.data?.fulfillments)
+            ? fRes.data.fulfillments
+            : (Array.isArray(fRes?.data)
+              ? fRes.data
+              : (Array.isArray(fRes?.fulfillments)
+                ? fRes.fulfillments
+                : []));
+          setFulfillments(fList);
         } catch {
           setFulfillments([]);
         }
       }
 
       // Fetch reviews if COMPLETED
-      if (d.status === DEAL_STATUS.COMPLETED) {
+      if (d?.status === DEAL_STATUS.COMPLETED) {
         try {
           const rRes = await reviewService.getDealReviews(dealId);
-          setReviews(rRes?.data?.reviews || rRes?.reviews || rRes || []);
+          const rList = Array.isArray(rRes?.data)
+            ? rRes.data
+            : (Array.isArray(rRes?.data?.reviews)
+              ? rRes.data.reviews
+              : (Array.isArray(rRes?.reviews)
+                ? rRes.reviews
+                : []));
+          setReviews(rList);
         } catch {
           setReviews([]);
         }
@@ -320,7 +340,7 @@ export function DealWorkspace({ basePath = '/deals' }) {
   const partner = isCompany ? deal.committeeId : deal.companyId;
   const partnerName = partner?.name || (isCompany ? 'Campus Committee' : 'Brand Sponsor');
   const partnerSub = isCompany
-    ? partner?.college || 'College Committee'
+    ? (typeof partner?.college === 'object' ? partner?.college?.name : partner?.college) || 'College Committee'
     : partner?.industry || 'Brand Partner';
   const partnerAvatar = partner?.logo || partner?.logoUrl || null;
   const partnerRole = isCompany ? 'COMMITTEE' : 'COMPANY';

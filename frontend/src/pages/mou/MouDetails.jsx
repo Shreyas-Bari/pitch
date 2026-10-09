@@ -46,17 +46,21 @@ export function MouDetails() {
       setError(null);
 
       const res = await mouService.getMou(mouId);
-      const m = res?.data?.mou || res?.mou || res;
+      const m = res?.data?.mou || (res?.data?._id ? res.data : null) || res?.mou || res;
       setMou(m);
 
       // Fetch versions
       try {
         const vRes = await mouService.getVersions(mouId);
-        const vList = vRes?.data?.versions || vRes?.versions || vRes || [];
+        const vList = Array.isArray(vRes?.data)
+          ? vRes.data
+          : (Array.isArray(vRes?.data?.versions)
+            ? vRes.data.versions
+            : (Array.isArray(vRes?.versions) ? vRes.versions : (Array.isArray(vRes) ? vRes : [])));
         setVersions(vList);
-        setSelectedVersion(m.currentVersionId || vList[0] || null);
+        setSelectedVersion(m?.currentVersionId || vList[0] || null);
       } catch {
-        setSelectedVersion(m.currentVersionId || null);
+        setSelectedVersion(m?.currentVersionId || null);
       }
     } catch (err) {
       const status = err.response?.status;

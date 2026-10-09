@@ -53,14 +53,21 @@ export function ChatWorkspace({ basePath = '/messages' }) {
       setConversationsLoading(true);
       setConversationsError(null);
       const res = await conversationService.getConversations();
-      const list = res.data?.conversations || res.conversations || [];
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : (res?.data?.conversations || res?.conversations || (Array.isArray(res) ? res : []));
       setConversations(list);
+
+      // Auto-select first conversation on desktop if none selected
+      if (!routeConversationId && list.length > 0 && typeof window !== 'undefined' && window.innerWidth >= 768) {
+        navigate(`${basePath}/${list[0]._id}`, { replace: true });
+      }
     } catch (err) {
       setConversationsError(err.response?.data?.message || err.message || 'Failed to load conversations.');
     } finally {
       setConversationsLoading(false);
     }
-  }, []);
+  }, [basePath, navigate, routeConversationId]);
 
   useEffect(() => {
     fetchConversations();
@@ -81,7 +88,7 @@ export function ChatWorkspace({ basePath = '/messages' }) {
       conversationService
         .getConversation(activeConversationId)
         .then((res) => {
-          const c = res.data?.conversation || res.conversation;
+          const c = res?.data?.conversation || res?.conversation || res?.data || null;
           setActiveConversation(c);
         })
         .catch(() => {
@@ -97,7 +104,9 @@ export function ChatWorkspace({ basePath = '/messages' }) {
       setMessagesLoading(true);
       setMessagesError(null);
       const res = await messageService.getMessages(convId, { limit: 100 });
-      const msgs = res.data?.messages || res.messages || [];
+      const msgs = Array.isArray(res?.data)
+        ? res.data
+        : (res?.data?.messages || res?.messages || (Array.isArray(res) ? res : []));
       setMessages(msgs);
 
       // Mark conversation as read on load
@@ -309,7 +318,7 @@ export function ChatWorkspace({ basePath = '/messages' }) {
     try {
       setIsSending(true);
       const res = await messageService.sendMessage(activeConversationId, payload);
-      const createdMessage = res.data?.message || res.message;
+      const createdMessage = res?.data?.message || res?.message || res?.data;
 
       if (createdMessage) {
         // Reconcile and deduplicate immediately
